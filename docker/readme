@@ -1,0 +1,24 @@
+### Running Consul
+
+    #docker run --rm -p 8400:8400 -p 8500:8500 -p 8600:53/udp -h node1 progrium/consul -server -bootstrap -ui-dir /ui
+
+### Running Prometheus and Grafana and Consul and zipkin
+     cd src/github.com/LongMarch7/higo/docker
+     docker-compose -f docker-compose-prometheus-grafana-zipkin.yml up -d
+
+
+### Runnig zipkin
+#docker run -d -p 9411:9411 openzipkin/zipkin
+
+#memcached
+ docker run -d -p 11211:11211  memcached
+
+ #mariadb -v "$PWD/data/mariadb:/var/lib/mysql"
+ docker run -d -e MYSQL_ROOT_PASSWORD=123456  -p 13306:3306 mariadb:10.0.33
+
+
+ #close all
+ docker stop $(docker ps -a -q)
+
+ #consul remove inavalid server
+  curl -v -X PUT "http://127.0.0.1:8500/v1/agent/service/deregister/PORT50232"

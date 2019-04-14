@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+  consul:
+    image:  progrium/consul
+    ports:
+    - 8400:8400
+    - 8500:8500
+    - 8600:53/udp
+    hostname: node1
+    entrypoint:
+    - /bin/start
+    - -server
+    - -bootstrap
+    - -ui-dir=/ui

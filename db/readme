@@ -1,0 +1,7 @@
+[build]
+go get -v github.com/LongMarch7/higo/toolkit/gorm/
+go get -v github.com/LongMarch7/higo/toolkit/gorm/gorm
+
+[create struct]
+cd  src/github.com/LongMarch7/higo/db/object
+gorm reverse mysql root:123456@tcp\(localhost:13306\)/test?charset=utf8 ../../toolkit/gorm/gorm/templates/goxorm

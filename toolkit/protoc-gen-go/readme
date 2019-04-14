@@ -1,0 +1,2 @@
+[build]
+go get github.com/LongMarch7/higo/toolkit/protoc-gen-go
