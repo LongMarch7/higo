@@ -3,7 +3,7 @@ package etcdv3
 import (
 	"github.com/go-kit/kit/sd"
 	"github.com/LongMarch7/higo/util/sd/internal/instance"
-	"github.com/LongMarch7/higo/util/pool"
+	"github.com/LongMarch7/higo/tansport/pool"
 	"google.golang.org/grpc/grpclog"
 	"strconv"
 )

@@ -3,7 +3,7 @@ package consul
 import (
 	"errors"
 	"fmt"
-	"github.com/LongMarch7/higo/util/pool"
+	"github.com/LongMarch7/higo/tansport/pool"
 	"strconv"
 	"strings"
 	"time"

@@ -8,6 +8,7 @@ import (
 	"github.com/LongMarch7/higo/middleware/zipkin"
 	"github.com/LongMarch7/higo/middleware/logger"
 	"github.com/LongMarch7/higo/middleware/prometheus"
+	"sync"
 )
 type MiddlewareManager struct {
 	opts       middlewareOpt
@@ -20,39 +21,56 @@ func defaultConfig() middlewareOpt{
 		methodName: "default",
 	}
 }
+var initOpt sync.Once
+var middlewareManager *MiddlewareManager
 
 func NewMiddlewareManager() *MiddlewareManager{
+	initOpt.Do(func() {
+		middlewareManager = &MiddlewareManager{}
+	})
 	opt := defaultConfig()
-
-	middleware := &MiddlewareManager{
-		opts: opt,
-	}
-	return middleware
+	middlewareManager.opts = opt
+	return middlewareManager
 }
 
-func (m *MiddlewareManager)AddService(opts ...MOption) *grpc_transport.Server{
+func (m *MiddlewareManager)AddMiddleware(opts ...MOption){
 	for _, o := range opts {
 		o(&m.opts)
 	}
-	var pluginEndpoint endpoint.Endpoint
+	var endpoint endpoint.Endpoint
 	if m.opts.endpoint != nil {
-		pluginEndpoint = m.opts.endpoint
-		pluginEndpoint = ratelimit.NewLimiter(m.opts.rOptions...).Middleware()(pluginEndpoint)
-		pluginEndpoint = hystrix.NewHystrix(m.opts.hOptions...).Middleware()(pluginEndpoint)
-		pluginEndpoint = zipkin.NewZipkin(m.opts.zOptions...).Middleware(zipkin.Name(m.opts.methodName))(pluginEndpoint)
-		pluginEndpoint = logger.NewLogger(m.opts.lOptions...).Middleware()(pluginEndpoint)
+		endpoint = m.opts.endpoint
+		endpoint = ratelimit.NewLimiter(m.opts.rOptions...).Middleware()(endpoint)
+
+		endpoint = hystrix.NewHystrix(m.opts.hOptions...).Middleware()(endpoint)
+
+		zOptions := append([]zipkin.ZOption{},zipkin.MethodName(m.opts.methodName))
+		zOptions = append(zOptions, m.opts.zOptions...)
+		endpoint = zipkin.NewZipkin(zOptions...).Middleware(zipkin.Name(m.opts.methodName))(endpoint)
+
+		lOptions := append([]logger.LOption{}, logger.MethodName(m.opts.methodName))
+		lOptions = append(lOptions, m.opts.lOptions...)
+		endpoint = logger.NewLogger(lOptions...).Middleware()(endpoint)
+
 		m.prometheus = prometheus.NewPrometheus(m.opts.pOptions...)
-		pluginEndpoint = m.prometheus.Middleware()(pluginEndpoint)
 		lvs := []string{"method", m.opts.methodName,"error"}
-		m.prometheus.AddObj(prometheus.Lvs(lvs),prometheus.Class(prometheus.Counter_TYPE))
-		m.prometheus.AddObj(prometheus.Lvs(lvs),prometheus.Class(prometheus.Histogram_TYPE))
-		server := grpc_transport.NewServer(
-			pluginEndpoint,
+		endpoint = m.prometheus.Middleware(prometheus.Lvs(lvs),prometheus.Class(prometheus.Counter_TYPE))(endpoint)
+		endpoint = m.prometheus.Middleware(prometheus.Lvs(lvs),prometheus.Class(prometheus.Histogram_TYPE))(endpoint)
+		m.opts.endpoint = endpoint
+	}
+}
+
+func (m *MiddlewareManager)NewServer(opts ...MOption) *grpc_transport.Server {
+	for _, o := range opts {
+		o(&m.opts)
+	}
+	if m.opts.endpoint != nil {
+		return grpc_transport.NewServer(
+			m.opts.endpoint,
 			m.opts.decodeFun,
 			m.opts.encodeFun,
 		)
-		return server
-	}else{
+	}else {
 		return nil
 	}
 }

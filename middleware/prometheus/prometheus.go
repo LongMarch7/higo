@@ -6,6 +6,7 @@ import (
 	"context"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"sync"
 	"time"
 )
 
@@ -16,20 +17,17 @@ const (
 	Histogram_TYPE    int8 = 3
 )
 
-type PrometheusFunc func(time.Time,error)
-
-type PrometheusEndpoint struct{
-	prometheusFunc []PrometheusFunc
-}
-
 type Prometheus struct{
 	opts               PrometheusOpt
-	prometheusEndpoint *PrometheusEndpoint
+	Counter            map[string]*kitprometheus.Counter
+	Summary            map[string]*kitprometheus.Summary
+	Histogram          map[string]*kitprometheus.Histogram
+	Gauge              map[string]*kitprometheus.Gauge
 }
 
 func defaultConfig() PrometheusOpt{
 	return PrometheusOpt{
-		namespace: "default_space",
+		namespace: "higo",
 		subsystem: "default_sub",
 		name: "default_name",
 		help: "default help.",
@@ -39,36 +37,57 @@ func defaultConfig() PrometheusOpt{
 	}
 }
 
+var initOpt sync.Once
+var prometheus *Prometheus
+
 func NewPrometheus(opts ...POption) *Prometheus{
-	opt := defaultConfig()
-	for _, o := range opts {
-		o(&opt)
-	}
-	return &Prometheus{
-		opts: opt,
-		prometheusEndpoint: new(PrometheusEndpoint),
-	}
+	initOpt.Do(func() {
+		opt := defaultConfig()
+		for _, o := range opts {
+			o(&opt)
+		}
+		prometheus = &Prometheus{
+			opts:      opt,
+			Counter:   make(map[string]*kitprometheus.Counter),
+			Summary:   make(map[string]*kitprometheus.Summary),
+			Histogram: make(map[string]*kitprometheus.Histogram),
+			Gauge:     make(map[string]*kitprometheus.Gauge),
+		}
+	})
+	return prometheus
 }
 
-func (p *Prometheus)Middleware() endpoint.Middleware {
+func (p *Prometheus)Middleware(opts ...POption) endpoint.Middleware {
+	for _, o := range opts {
+		o(&p.opts)
+	}
+	p.AddObj()
+	switch p.opts.class{
+	case Counter_TYPE:
+		if counter, ok := p.Counter[p.opts.subsystem + p.opts.name]; ok {
+			return p.PrometheusCounterEndpoint(counter)
+		}
+	case Summary_TYPE:
+		if summary, ok := p.Summary[p.opts.subsystem + p.opts.name]; ok {
+			return p.PrometheusSummaryEndpoint(summary)
+		}
+	case Gauge_TYPE:
+		if gauge, ok := p.Gauge[p.opts.subsystem + p.opts.name]; ok {
+			return p.PrometheusGaugeEndpoint(gauge)
+		}
+	case Histogram_TYPE:
+		if histogram, ok := p.Histogram[p.opts.subsystem + p.opts.name]; ok {
+			return p.PrometheusHistogramEndpoint(histogram)
+		}
+	}
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			defer func(begin time.Time){
-				funcs := p.prometheusEndpoint
-				for _, value := range funcs.prometheusFunc{
-					value(begin, err)
-				}
-			}(time.Now())
 			return next(ctx, request)
 		}
 	}
 }
 
-func (p *Prometheus)AddObj(opts ...POption) {
-	for _, o := range opts {
-		o(&p.opts)
-	}
-	var prometheusFunc PrometheusFunc
+func (p *Prometheus)AddObj() {
 	switch p.opts.class{
 	case Counter_TYPE:
 		requestCount := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
@@ -77,7 +96,9 @@ func (p *Prometheus)AddObj(opts ...POption) {
 			Name:      p.opts.name,
 			Help:      p.opts.help,
 		}, p.opts.fieldKeys)
-		prometheusFunc = p.PrometheusCounterEndpoint(requestCount)
+		if _, ok := p.Counter[p.opts.subsystem + p.opts.name]; !ok {
+			p.Counter[p.opts.subsystem+p.opts.name] = requestCount
+		}
 	case Summary_TYPE:
 		requestSummary := kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
 			Namespace: p.opts.namespace,
@@ -85,7 +106,9 @@ func (p *Prometheus)AddObj(opts ...POption) {
 			Name:      p.opts.name,
 			Help:      p.opts.help,
 		}, p.opts.fieldKeys)
-		prometheusFunc = p.PrometheusSummaryEndpoint(requestSummary)
+		if _, ok := p.Summary[p.opts.subsystem + p.opts.name]; !ok {
+			p.Summary[p.opts.subsystem+p.opts.name] = requestSummary
+		}
 	case Gauge_TYPE:
 		requestGauge := kitprometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 			Namespace: p.opts.namespace,
@@ -93,7 +116,9 @@ func (p *Prometheus)AddObj(opts ...POption) {
 			Name:      p.opts.name,
 			Help:      p.opts.help,
 		}, p.opts.fieldKeys)
-		prometheusFunc = p.PrometheusGaugeEndpoint(requestGauge)
+		if _, ok := p.Gauge[p.opts.subsystem + p.opts.name]; !ok {
+			p.Gauge[p.opts.subsystem+p.opts.name] = requestGauge
+		}
 	case Histogram_TYPE:
 		requestHistogram := kitprometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
 			Namespace: p.opts.namespace,
@@ -102,39 +127,60 @@ func (p *Prometheus)AddObj(opts ...POption) {
 			Help:      p.opts.help,
 			Buckets: p.opts.buckets,
 		}, p.opts.fieldKeys)
-		prometheusFunc = p.PrometheusHistogramEndpoint(requestHistogram)
-	}
-	p.prometheusEndpoint.prometheusFunc = append(p.prometheusEndpoint.prometheusFunc, prometheusFunc)
-}
-
-func (p *Prometheus)PrometheusCounterEndpoint(counter *kitprometheus.Counter) PrometheusFunc {
-	return func(begin time.Time, err error)  {
-		lvs := append(p.opts.lvs,fmt.Sprint(err != nil))
-		counter.With(lvs...).Add(p.opts.count)
+		if _, ok := p.Histogram[p.opts.subsystem + p.opts.name]; !ok {
+			p.Histogram[p.opts.subsystem+p.opts.name] = requestHistogram
+		}
 	}
 }
 
-func (p *Prometheus)PrometheusSummaryEndpoint(summary *kitprometheus.Summary) PrometheusFunc {
-	return func(begin time.Time, err error)  {
-		lvs := append(p.opts.lvs,fmt.Sprint(err != nil))
-		summary.With(lvs...).Observe(time.Since(begin).Seconds())
+func (p *Prometheus)PrometheusCounterEndpoint(counter *kitprometheus.Counter) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			defer func() {
+				lvs := append(p.opts.lvs, fmt.Sprint(err != nil))
+				counter.With(lvs...).Add(p.opts.count)
+			}()
+			return next(ctx, request)
+		}
 	}
 }
 
-func (p *Prometheus)PrometheusHistogramEndpoint(histogram *kitprometheus.Histogram) PrometheusFunc {
-	return func(begin time.Time, err error)  {
-		lvs := append(p.opts.lvs,fmt.Sprint(err != nil))
-		histogram.With(lvs...).Observe(time.Since(begin).Seconds())
+func (p *Prometheus)PrometheusSummaryEndpoint(summary *kitprometheus.Summary) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			defer func(begin time.Time) {
+				lvs := append(p.opts.lvs, fmt.Sprint(err != nil))
+				summary.With(lvs...).Observe(time.Since(begin).Seconds())
+			}(time.Now())
+			return next(ctx, request)
+		}
 	}
 }
 
-func (p *Prometheus)PrometheusGaugeEndpoint(gauge *kitprometheus.Gauge) PrometheusFunc {
-	return func(begin time.Time, err error)  {
-		lvs := append(p.opts.lvs,fmt.Sprint(err != nil))
-		if p.opts.isSet {
-			gauge.With(lvs...).Set(p.opts.count)
-		}else{
-			gauge.With(lvs...).Add(p.opts.count)
+func (p *Prometheus)PrometheusHistogramEndpoint(histogram *kitprometheus.Histogram) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			defer func(begin time.Time) {
+				lvs := append(p.opts.lvs, fmt.Sprint(err != nil))
+				histogram.With(lvs...).Observe(time.Since(begin).Seconds())
+			}(time.Now())
+			return next(ctx, request)
+		}
+	}
+}
+
+func (p *Prometheus)PrometheusGaugeEndpoint(gauge *kitprometheus.Gauge) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			defer func() {
+				lvs := append(p.opts.lvs, fmt.Sprint(err != nil))
+				if p.opts.isSet {
+					gauge.With(lvs...).Set(p.opts.count)
+				}else{
+					gauge.With(lvs...).Add(p.opts.count)
+				}
+			}()
+			return next(ctx, request)
 		}
 	}
 }
