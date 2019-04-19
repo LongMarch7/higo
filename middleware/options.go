@@ -9,64 +9,86 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	grpc_transport "github.com/go-kit/kit/transport/grpc"
 )
-type middlewareOpt struct {
+type middlewareServerOpt struct {
 	zOptions   []zipkin.ZOption
 	rOptions   []ratelimit.ROption
 	pOptions   []prometheus.POption
 	hOptions   []hystrix.HOption
 	lOptions   []logger.LOption
 	endpoint   endpoint.Endpoint
+	prefix     string
 	methodName string
 	decodeFun  grpc_transport.DecodeRequestFunc
 	encodeFun  grpc_transport.EncodeResponseFunc
 }
-type MOption func(o *middlewareOpt)
+type SMOption func(o *middlewareServerOpt)
 
-func ZOptions(zOptions []zipkin.ZOption) MOption {
-	return func(o *middlewareOpt) {
+func SZOptions(zOptions []zipkin.ZOption) SMOption {
+	return func(o *middlewareServerOpt) {
 		o.zOptions = zOptions
 	}
 }
 
-func ROptions(rOptions []ratelimit.ROption) MOption {
-	return func(o *middlewareOpt) {
+func SROptions(rOptions []ratelimit.ROption) SMOption {
+	return func(o *middlewareServerOpt) {
 		o.rOptions = rOptions
 	}
 }
 
-func POptions(pOptions []prometheus.POption) MOption {
-	return func(o *middlewareOpt) {
+func SPOptions(pOptions []prometheus.POption) SMOption {
+	return func(o *middlewareServerOpt) {
 		o.pOptions = pOptions
 	}
 }
 
-func HOptions(hOptions []hystrix.HOption) MOption {
-	return func(o *middlewareOpt) {
+func SHOptions(hOptions []hystrix.HOption) SMOption {
+	return func(o *middlewareServerOpt) {
 		o.hOptions = hOptions
 	}
 }
 
-func Endpoint(endpoint endpoint.Endpoint) MOption {
-	return func(o *middlewareOpt) {
+func SEndpoint(endpoint endpoint.Endpoint) SMOption {
+	return func(o *middlewareServerOpt) {
 		o.endpoint = endpoint
 	}
 }
 
-func MethodName(methodName string) MOption {
-	return func(o *middlewareOpt) {
+func SPrefix(prefix string) SMOption {
+	return func(o *middlewareServerOpt) {
+		o.prefix = prefix
+	}
+}
+
+func SMethodName(methodName string) SMOption {
+	return func(o *middlewareServerOpt) {
 		o.methodName = methodName
 	}
 }
 
-func DecodeFun(decodeFun grpc_transport.DecodeRequestFunc) MOption {
-	return func(o *middlewareOpt) {
+func SDecodeFun(decodeFun grpc_transport.DecodeRequestFunc) SMOption {
+	return func(o *middlewareServerOpt) {
 		o.decodeFun = decodeFun
 	}
 }
 
-func encodeFun(encodeFun grpc_transport.EncodeResponseFunc) MOption {
-	return func(o *middlewareOpt) {
+func SEncodeFun(encodeFun grpc_transport.EncodeResponseFunc) SMOption {
+	return func(o *middlewareServerOpt) {
 		o.encodeFun = encodeFun
 	}
 }
+
+
+type middlewareClientOpt struct {
+	zOptions   []zipkin.ZOption
+	rOptions   []ratelimit.ROption
+	pOptions   []prometheus.POption
+	hOptions   []hystrix.HOption
+	lOptions   []logger.LOption
+	endpoint   endpoint.Endpoint
+	prefix     string
+	methodName string
+	decodeFun  grpc_transport.DecodeRequestFunc
+	encodeFun  grpc_transport.EncodeResponseFunc
+}
+type CMOption func(o *middlewareClientOpt)
 

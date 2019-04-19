@@ -53,85 +53,55 @@ func GoImportsSource(path string, s string) (string, error) {
 	return string(is), err
 }
 
+func GetParentDIr() string{
+	sub := ""
+	if viper.GetString("gk_parent") != "" {
+		sub = "/" + viper.GetString("gk_parent")
+	}
+	return sub
+}
+
 // GetServiceImportPath returns the import path of the service interface.
 func GetServiceImportPath(name string) (string, error) {
-	svcPath := fmt.Sprintf(viper.GetString("gk_service_path_format"), ToLowerSnakeCase(name))
+	svcPath := fmt.Sprintf(viper.GetString("gk_service_path_format") , GetParentDIr(), ToLowerSnakeCase(name))
 	svcPath = strings.Replace(svcPath, "\\", "/", -1)
 	return svcPath, nil
 }
 
 // GetCmdServiceImportPath returns the import path of the cmd service (used by cmd/main.go).
 func GetCmdServiceImportPath(name string) (string, error) {
-	gosrc := GetGOPATH() + "/src/"
-	gosrc = strings.Replace(gosrc, "\\", "/", -1)
-	pwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	if viper.GetString("gk_folder") != "" {
-		pwd += "/" + viper.GetString("gk_folder")
-	}
-	pwd = strings.Replace(pwd, "\\", "/", -1)
-	projectPath := strings.Replace(pwd, gosrc, "", 1)
-	svcPath := fmt.Sprintf(viper.GetString("gk_cmd_service_path_format"), ToLowerSnakeCase(name))
-
+	svcPath := fmt.Sprintf(viper.GetString("gk_cmd_service_path_format") , GetParentDIr(), ToLowerSnakeCase(name))
 	svcPath = strings.Replace(svcPath, "\\", "/", -1)
-	serviceImport := projectPath + "/" + svcPath
-	return serviceImport, nil
+	return svcPath, nil
 }
 
 // GetEndpointImportPath returns the import path of the service endpoints.
 func GetEndpointImportPath(name string) (string, error) {
-	epPath := fmt.Sprintf(viper.GetString("gk_endpoint_path_format"), ToLowerSnakeCase(name))
+	epPath := fmt.Sprintf(viper.GetString("gk_endpoint_path_format") , GetParentDIr(), ToLowerSnakeCase(name))
 	epPath = strings.Replace(epPath, "\\", "/", -1)
 	return epPath, nil
 }
 
 // GetGRPCTransportImportPath returns the import path of the service grpc transport.
 func GetGRPCTransportImportPath(name string) (string, error) {
-	gosrc := GetGOPATH() + "/src/"
-	gosrc = strings.Replace(gosrc, "\\", "/", -1)
-	pwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	if viper.GetString("gk_folder") != "" {
-		pwd += "/" + viper.GetString("gk_folder")
-	}
-	pwd = strings.Replace(pwd, "\\", "/", -1)
-	projectPath := strings.Replace(pwd, gosrc, "", 1)
-	epPath := fmt.Sprintf(viper.GetString("gk_grpc_path_format"), ToLowerSnakeCase(name))
-
+	epPath := fmt.Sprintf(viper.GetString("gk_grpc_path_format") , GetParentDIr(), ToLowerSnakeCase(name))
 	epPath = strings.Replace(epPath, "\\", "/", -1)
-	endpointImport := projectPath + "/" + epPath
-	return endpointImport, nil
+	return epPath, nil
 }
 
 // GetPbImportPath returns the import path of the generated service grpc pb.
 func GetPbImportPath(name string) (string, error) {
-	epPath := fmt.Sprintf(viper.GetString("gk_grpc_pb_path_format"), ToLowerSnakeCase(name))
+	epPath := fmt.Sprintf(viper.GetString("gk_grpc_pb_path_format"),  GetParentDIr(), ToLowerSnakeCase(name))
 	epPath = strings.Replace(epPath, "\\", "/", -1)
+	epPath = strings.Replace(epPath, "//", "/", -1)
 	return epPath, nil
 }
 
 // GetHTTPTransportImportPath returns the import path of the service http transport.
 func GetHTTPTransportImportPath(name string) (string, error) {
-	gosrc := GetGOPATH() + "/src/"
-	gosrc = strings.Replace(gosrc, "\\", "/", -1)
-	pwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	if viper.GetString("gk_folder") != "" {
-		pwd += "/" + viper.GetString("gk_folder")
-	}
-	pwd = strings.Replace(pwd, "\\", "/", -1)
-	projectPath := strings.Replace(pwd, gosrc, "", 1)
-	epPath := fmt.Sprintf(viper.GetString("gk_http_path_format"), ToLowerSnakeCase(name))
-
+	epPath := fmt.Sprintf(viper.GetString("gk_http_path_format") , GetParentDIr(), ToLowerSnakeCase(name))
 	epPath = strings.Replace(epPath, "\\", "/", -1)
-	httpImports := projectPath + "/" + epPath
-	return httpImports, nil
+	return epPath, nil
 }
 
 // GetDockerFileProjectPath returns the path of the project.

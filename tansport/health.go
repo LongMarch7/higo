@@ -18,7 +18,7 @@ func MakeHealthEndpoint() endpoint.Endpoint {
     }
 }
 
-func MakeHttpHandler(r *mux.Router, endpoint endpoint.Endpoint) http.Handler {
+func MakeMonitoringHttpHandler(r *mux.Router, endpoint endpoint.Endpoint) http.Handler {
     options := []httptransport.ServerOption{
         httptransport.ServerErrorEncoder(encodeError),
     }

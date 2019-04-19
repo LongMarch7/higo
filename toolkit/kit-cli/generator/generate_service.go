@@ -37,12 +37,13 @@ func NewGenerateService(name, transport string, sMiddleware, gorillaMux, eMiddle
 	i := &GenerateService{
 		name:          name,
 		interfaceName: utils.ToCamelCase(name + "Service"),
-		destPath:      fmt.Sprintf(viper.GetString("gk_service_path_format"), utils.ToLowerSnakeCase(name)),
+		destPath:      fmt.Sprintf(viper.GetString("gk_service_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 		sMiddleware:   sMiddleware,
 		eMiddleware:   eMiddleware,
 		gorillaMux:    gorillaMux,
 		methods:       methods,
 	}
+	i.destPath = strings.Replace(i.destPath,"//","/",-1)
 	i.filePath = path.Join(i.destPath, viper.GetString("gk_service_file_name"))
 	i.pg = NewPartialGenerator(nil)
 	i.serviceStructName = utils.ToLowerFirstCamelCase(viper.GetString("gk_service_struct_prefix") + "-" + i.interfaceName)
@@ -97,16 +98,16 @@ func (g *GenerateService) Generate() (err error) {
 	if err != nil {
 		return err
 	}
-	mdwG := newGenerateServiceMiddleware(g.name, g.file, g.serviceInterface, g.sMiddleware)
-	err = mdwG.Generate()
-	if err != nil {
-		return err
-	}
-	epGB := newGenerateServiceEndpointsBase(g.name, g.serviceInterface)
-	err = epGB.Generate()
-	if err != nil {
-		return err
-	}
+	//mdwG := newGenerateServiceMiddleware(g.name, g.file, g.serviceInterface, g.sMiddleware)
+	//err = mdwG.Generate()
+	//if err != nil {
+	//	return err
+	//}
+	//epGB := newGenerateServiceEndpointsBase(g.name, g.serviceInterface)
+	//err = epGB.Generate()
+	//if err != nil {
+	//	return err
+	//}
 	epG := newGenerateServiceEndpoints(g.name, g.file.Imports, g.serviceInterface, g.eMiddleware)
 	err = epG.Generate()
 	if err != nil {
@@ -117,13 +118,14 @@ func (g *GenerateService) Generate() (err error) {
 	if err != nil {
 		return err
 	}
-	mbG := newGenerateCmdBase(g.name, g.serviceInterface, g.sMiddleware, g.eMiddleware, g.methods)
-	err = mbG.Generate()
-	if err != nil {
-		return err
-	}
-	mG := newGenerateCmd(g.name, g.serviceInterface, g.sMiddleware, g.eMiddleware, g.methods)
-	return mG.Generate()
+	//mbG := newGenerateCmdBase(g.name, g.serviceInterface, g.sMiddleware, g.eMiddleware, g.methods)
+	//err = mbG.Generate()
+	//if err != nil {
+	//	return err
+	//}
+	//mG := newGenerateCmd(g.name, g.serviceInterface, g.sMiddleware, g.eMiddleware, g.methods)
+	//return mG.Generate()
+	return nil
 }
 func (g *GenerateService) generateServiceMethods() {
 	var stp string
@@ -182,7 +184,7 @@ func (g *GenerateService) generateServiceStruct() {
 }
 func (g *GenerateService) generateNewMethod() {
 	for _, v := range g.file.Methods {
-		if v.Name == "New" {
+		if v.Name == "NewService" {
 			logrus.Debugf("Service method `%s` already exists so it will not be recreated.", v.Name)
 			return
 		}
@@ -193,19 +195,20 @@ func (g *GenerateService) generateNewMethod() {
 	).Line()
 	fn := fmt.Sprintf("New%s", utils.ToCamelCase(g.serviceStructName))
 	body := []jen.Code{
-		jen.Var().Id("svc").Id(g.interfaceName).Op("=").Id(fn).Call(),
-		jen.For(
-			jen.List(jen.Id("_"), jen.Id("m")).Op(":=").Range().Id("middleware"),
-		).Block(
-			jen.Id("svc").Op("=").Id("m").Call(jen.Id("svc")),
-		),
-		jen.Return(jen.Id("svc")),
+		//jen.Var().Id("svc").Id(g.interfaceName).Op("=").Id(fn).Call(),
+		//jen.For(
+		//	jen.List(jen.Id("_"), jen.Id("m")).Op(":=").Range().Id("middleware"),
+		//).Block(
+		//	jen.Id("svc").Op("=").Id("m").Call(jen.Id("svc")),
+		//),
+		//jen.Return(jen.Id("svc")),
+		jen.Return(jen.Id(fn).Call()),
 	}
 	g.pg.appendFunction(
-		"New",
+		"NewService",
 		nil,
 		[]jen.Code{
-			jen.Id("middleware").Id("[]Middleware"),
+			//jen.Id("middleware").Id("[]Middleware"),
 		},
 		[]jen.Code{},
 		g.interfaceName,
@@ -286,7 +289,7 @@ func newGenerateServiceMiddleware(name string, serviceFile *parser.File,
 	gsm := &generateServiceMiddleware{
 		name:             name,
 		interfaceName:    utils.ToCamelCase(name + "Service"),
-		destPath:         fmt.Sprintf(viper.GetString("gk_service_path_format"), utils.ToLowerSnakeCase(name)),
+		destPath:         fmt.Sprintf(viper.GetString("gk_service_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 		serviceInterface: serviceInterface,
 		serviceFile:      serviceFile,
 	}
@@ -500,7 +503,7 @@ func newGenerateServiceEndpoints(name string, imports []parser.NamedTypeValue,
 	gsm := &generateServiceEndpoints{
 		name:             name,
 		interfaceName:    utils.ToCamelCase(name + "Service"),
-		destPath:         fmt.Sprintf(viper.GetString("gk_endpoint_path_format"), utils.ToLowerSnakeCase(name)),
+		destPath:         fmt.Sprintf(viper.GetString("gk_endpoint_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 		serviceInterface: serviceInterface,
 		serviceImports:   imports,
 	}
@@ -577,7 +580,7 @@ func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 	for _, m := range g.serviceInterface.Methods {
 		found := false
 		for _, v := range g.file.Methods {
-			if v.Name == m.Name && v.Struct.Type == "Endpoints" {
+			if v.Name == m.Name+"Proxy" {
 				found = true
 				break
 			}
@@ -659,7 +662,9 @@ func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 
 		body := []jen.Code{
 			jen.Id(rqName).Op(":=").Id(m.Name + "Request").Values(req),
-			jen.List(jen.Id(rpName), jen.Err()).Op(":=").Id(stp).Dot(m.Name + "Endpoint").Call(
+			jen.Id(ctxN).Op("=").Qual("context","WithValue").Call(jen.Id(ctxN),jen.Lit("srv"),jen.Lit("pb." + utils.ToCamelCase(g.name))),
+			jen.Id(ctxN).Op("=").Qual("context","WithValue").Call(jen.Id(ctxN),jen.Lit("method"),jen.Lit(m.Name)),
+			jen.List(jen.Id(rpName), jen.Err()).Op(":=").Id(stp).Call(
 				jen.List(jen.Id(ctxN), jen.Id(rqName)),
 			),
 			jen.If(
@@ -670,13 +675,35 @@ func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 			jen.Return(jen.List(resList...)),
 		}
 		g.code.Raw().Commentf("%s implements Service. Primarily useful in a client.", m.Name).Line()
-		g.code.appendFunction(
-			m.Name,
-			jen.Id(stp).Id("Endpoints"),
+		//g.code.appendFunction(
+		//	m.Name,
+		//	nil,
+		//	sp,
+		//	rs,
+		//	"",
+		//	body...,
+		//)
+		g.code.Raw().Type().Id(m.Name + "Func").Func().Params(sp...).Params(rs...).Line()
+		pt := NewPartialGenerator(nil)
+		pt.appendFunction(
+			"",
+			nil,
 			sp,
 			rs,
 			"",
 			body...,
+		)
+		g.code.appendFunction(
+			m.Name+"Proxy",
+			nil,
+			[]jen.Code{
+				jen.Id("e").Qual("github.com/go-kit/kit/endpoint", "Endpoint"),
+			},
+			[]jen.Code{
+				jen.Id(m.Name + "Func"),
+			},
+			"",
+			jen.Return(pt.Raw()),
 		)
 		g.code.NewLine()
 	}
@@ -774,7 +801,7 @@ func (g *generateServiceEndpoints) generateMethodEndpoint() (err error) {
 			}
 		}
 		for _, v := range g.file.Methods {
-			if v.Name == "Make"+m.Name+"Endpoint" {
+			if v.Name == "Make"+m.Name+"ServerEndpoint" {
 				makeMethdExists = true
 			}
 			if v.Name == "Failed" && v.Struct.Type == m.Name+"Response" {
@@ -828,10 +855,10 @@ func (g *generateServiceEndpoints) generateMethodEndpoint() (err error) {
 				"",
 				bd...,
 			)
-			g.code.Raw().Commentf("Make%sEndpoint returns an endpoint that invokes %s on the service.", m.Name, m.Name)
+			g.code.Raw().Commentf("Make%sServerEndpoint returns an endpoint that invokes %s on the service.", m.Name, m.Name)
 			g.code.NewLine()
 			g.code.appendFunction(
-				"Make"+m.Name+"Endpoint",
+				"Make"+m.Name+"ServerEndpoint",
 				nil,
 				[]jen.Code{
 					jen.Id("s").Qual(sImp, g.interfaceName),
@@ -896,7 +923,7 @@ func newGenerateServiceEndpointsBase(name string, serviceInterface parser.Interf
 	gsm := &generateServiceEndpointsBase{
 		name:             name,
 		interfaceName:    utils.ToCamelCase(name + "Service"),
-		destPath:         fmt.Sprintf(viper.GetString("gk_endpoint_path_format"), utils.ToLowerSnakeCase(name)),
+		destPath:         fmt.Sprintf(viper.GetString("gk_endpoint_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 		serviceInterface: serviceInterface,
 	}
 	gsm.filePath = path.Join(gsm.destPath, viper.GetString("gk_endpoint_base_file_name"))
@@ -910,58 +937,90 @@ func (g *generateServiceEndpointsBase) Generate() (err error) {
 	if err != nil {
 		return err
 	}
-	fields := []jen.Code{}
-	for _, v := range g.serviceInterface.Methods {
-		fields = append(fields, jen.Id(v.Name+"Endpoint").Qual("github.com/go-kit/kit/endpoint", "Endpoint"))
+	//fields := []jen.Code{}
+	//for _, v := range g.serviceInterface.Methods {
+	//	fields = append(fields, jen.Id(v.Name+"Endpoint").Qual("github.com/go-kit/kit/endpoint", "Endpoint"))
+	//}
+	//g.srcFile.PackageComment("THIS FILE IS AUTO GENERATED BY GK-CLI DO NOT EDIT!!")
+	//g.code.appendMultilineComment([]string{
+	//	"Endpoints collects all of the endpoints that compose a profile service. It's",
+	//	"meant to be used as a helper struct, to collect all of the endpoints into a",
+	//	"single parameter.",
+	//})
+	//g.code.NewLine()
+	//g.code.appendStruct(
+	//	"Endpoints",
+	//	fields...,
+	//)
+	//eps := jen.Dict{}
+	//loops := []jen.Code{}
+	//for _, v := range g.serviceInterface.Methods {
+	//	eps[jen.Id(v.Name+"Endpoint")] = jen.Id("Make" + v.Name + "Endpoint").Call(jen.Id("s"))
+	//	l := jen.For(jen.List(jen.Id("_"), jen.Id("m")).Op(":=").Range().Id("mdw").Index(jen.Lit(v.Name)))
+	//	l.Block(
+	//		jen.Id("eps").Dot(v.Name + "Endpoint").Op("=").Id("m").Call(jen.Id("eps").Dot(v.Name + "Endpoint")),
+	//	)
+	//	loops = append(loops, l)
+	//}
+	//svcImport, err := utils.GetServiceImportPath(g.name)
+	//if err != nil {
+	//	return err
+	//}
+	//body := append([]jen.Code{
+	//	jen.Id("eps").Op(":=").Id("Endpoints").Values(
+	//		eps,
+	//	),
+	//}, loops...)
+	//body = append(body, jen.Return(jen.Id("eps")))
+	//g.code.appendMultilineComment([]string{
+	//	"New returns a Endpoints struct that wraps the provided service, and wires in all of the",
+	//	"expected endpoint middlewares",
+	//})
+	//g.code.NewLine()
+	//g.code.appendFunction(
+	//	"New",
+	//	nil,
+	//	[]jen.Code{
+	//		jen.Id("s").Qual(svcImport, g.interfaceName),
+	//		jen.Id("mdw").Map(
+	//			jen.String(),
+	//		).Index().Id("endpoint.Middleware"),
+	//	},
+	//	[]jen.Code{},
+	//	"Endpoints",
+	//	body...,
+	//)
+	bd := []jen.Code{
+		jen.Id("poolManage").Id("ok").Op(":=").Qual("github.com/LongMarch7/higo/tansport/pool","GetConnect").Call(jen.Id("addr")),
 	}
-	g.srcFile.PackageComment("THIS FILE IS AUTO GENERATED BY GK-CLI DO NOT EDIT!!")
-	g.code.appendMultilineComment([]string{
-		"Endpoints collects all of the endpoints that compose a profile service. It's",
-		"meant to be used as a helper struct, to collect all of the endpoints into a",
-		"single parameter.",
-	})
-	g.code.NewLine()
-	g.code.appendStruct(
-		"Endpoints",
-		fields...,
-	)
-	eps := jen.Dict{}
-	loops := []jen.Code{}
-	for _, v := range g.serviceInterface.Methods {
-		eps[jen.Id(v.Name+"Endpoint")] = jen.Id("Make" + v.Name + "Endpoint").Call(jen.Id("s"))
-		l := jen.For(jen.List(jen.Id("_"), jen.Id("m")).Op(":=").Range().Id("mdw").Index(jen.Lit(v.Name)))
-		l.Block(
-			jen.Id("eps").Dot(v.Name + "Endpoint").Op("=").Id("m").Call(jen.Id("eps").Dot(v.Name + "Endpoint")),
-		)
-		loops = append(loops, l)
-	}
-	svcImport, err := utils.GetServiceImportPath(g.name)
-	if err != nil {
-		return err
-	}
-	body := append([]jen.Code{
-		jen.Id("eps").Op(":=").Id("Endpoints").Values(
-			eps,
-		),
-	}, loops...)
-	body = append(body, jen.Return(jen.Id("eps")))
-	g.code.appendMultilineComment([]string{
-		"New returns a Endpoints struct that wraps the provided service, and wires in all of the",
-		"expected endpoint middlewares",
-	})
-	g.code.NewLine()
-	g.code.appendFunction(
-		"New",
+	pt := NewPartialGenerator(nil)
+	pt.appendFunction(
+		"",
 		nil,
 		[]jen.Code{
-			jen.Id("s").Qual(svcImport, g.interfaceName),
-			jen.Id("mdw").Map(
-				jen.String(),
-			).Index().Id("endpoint.Middleware"),
+			jen.Id("ctx").Qual("context", "Context"),
+			jen.Id("request").Interface(),
 		},
-		[]jen.Code{},
-		"Endpoints",
-		body...,
+		[]jen.Code{
+			jen.Interface(),
+			jen.Error(),
+		},
+		"",
+		bd...,
+	)
+	g.code.appendFunction(
+		"Req"+utils.ToCamelCase(g.name)+"Factory",
+		nil,
+		[]jen.Code{
+			jen.Id("addr").String(),
+		},
+		[]jen.Code{
+			jen.Qual("github.com/go-kit/kit/endpoint", "Endpoint"),
+			jen.Qual("io","Closer"),
+			jen.Error(),
+		},
+		"",
+		jen.Return(pt.Raw()),
 	)
 	g.code.NewLine()
 	return g.fs.WriteFile(g.filePath, g.srcFile.GoString(), true)
@@ -981,7 +1040,7 @@ func newGenerateEndpointMiddleware(name string) Gen {
 	gsm := &generateEndpointMiddleware{
 		name:          name,
 		interfaceName: utils.ToCamelCase(name + "Service"),
-		destPath:      fmt.Sprintf(viper.GetString("gk_endpoint_path_format"), utils.ToLowerSnakeCase(name)),
+		destPath:      fmt.Sprintf(viper.GetString("gk_endpoint_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 	}
 	gsm.filePath = path.Join(gsm.destPath, viper.GetString("gk_endpoint_middleware_file_name"))
 	gsm.srcFile = jen.NewFilePath(gsm.destPath)
@@ -1185,11 +1244,11 @@ func newGenerateCmdBase(name string, serviceInterface parser.Interface,
 	t := &generateCmdBase{
 		name:                               name,
 		methods:                            methods,
-		destPath:                           fmt.Sprintf(viper.GetString("gk_cmd_service_path_format"), utils.ToLowerSnakeCase(name)),
+		destPath:                           fmt.Sprintf(viper.GetString("gk_cmd_service_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 		serviceInterface:                   serviceInterface,
 		generateSvcDefaultsMiddleware:      generateSacDefaultsMiddleware,
-		httpDestPath:                       fmt.Sprintf(viper.GetString("gk_http_path_format"), utils.ToLowerSnakeCase(name)),
-		grpcDestPath:                       fmt.Sprintf(viper.GetString("gk_grpc_path_format"), utils.ToLowerSnakeCase(name)),
+		httpDestPath:                       fmt.Sprintf(viper.GetString("gk_http_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
+		grpcDestPath:                       fmt.Sprintf(viper.GetString("gk_grpc_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 		generateEndpointDefaultsMiddleware: generateEndpointDefaultsMiddleware,
 	}
 	t.filePath = path.Join(t.destPath, viper.GetString("gk_cmd_base_file_name"))
@@ -1491,9 +1550,9 @@ func newGenerateCmd(name string, serviceInterface parser.Interface,
 		name:                               name,
 		methods:                            methods,
 		interfaceName:                      utils.ToCamelCase(name + "Service"),
-		destPath:                           fmt.Sprintf(viper.GetString("gk_cmd_service_path_format"), utils.ToLowerSnakeCase(name)),
-		httpDestPath:                       fmt.Sprintf(viper.GetString("gk_http_path_format"), utils.ToLowerSnakeCase(name)),
-		grpcDestPath:                       fmt.Sprintf(viper.GetString("gk_grpc_path_format"), utils.ToLowerSnakeCase(name)),
+		destPath:                           fmt.Sprintf(viper.GetString("gk_cmd_service_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
+		httpDestPath:                       fmt.Sprintf(viper.GetString("gk_http_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
+		grpcDestPath:                       fmt.Sprintf(viper.GetString("gk_grpc_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 		serviceInterface:                   serviceInterface,
 		generateSvcDefaultsMiddleware:      generateSacDefaultsMiddleware,
 		generateEndpointDefaultsMiddleware: generateEndpointDefaultsMiddleware,
@@ -1762,7 +1821,7 @@ func (g *generateCmd) generateRun() (*PartialGenerator, error) {
 	if err != nil {
 		return nil, err
 	}
-	pg.Raw().Id("svc").Op(":=").Qual(svcImport, "New").Call(
+	pg.Raw().Id("svc").Op(":=").Qual(svcImport, "NewService").Call(
 		jen.Id("getServiceMiddleware").Call(jen.Id("logger")),
 	).Line()
 	pg.Raw().Id("eps").Op(":=").Qual(epImport, "New").Call(

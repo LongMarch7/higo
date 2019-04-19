@@ -5,9 +5,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/dave/jennifer/jen"
 	"github.com/LongMarch7/higo/toolkit/kit-cli/fs"
 	"github.com/LongMarch7/higo/toolkit/kit-cli/utils"
+	"github.com/dave/jennifer/jen"
 	"github.com/spf13/viper"
 )
 
@@ -28,7 +28,7 @@ func NewNewService(name string) Gen {
 	gs := &NewService{
 		name:          name,
 		interfaceName: utils.ToCamelCase(name + "Service"),
-		destPath:      fmt.Sprintf(viper.GetString("gk_service_path_format"), utils.ToLowerSnakeCase(name)),
+		destPath:      fmt.Sprintf(viper.GetString("gk_service_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 	}
 	gs.filePath = path.Join(gs.destPath, viper.GetString("gk_service_file_name"))
 	gs.srcFile = jen.NewFilePath(strings.Replace(gs.destPath, "\\", "/", -1))

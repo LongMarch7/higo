@@ -1,0 +1,8 @@
+[build]
+go get -v github.com/LongMarch7/higo/examples/grpc/grpc-server
+go get -v github.com/LongMarch7/higo/examples/grpc/grpc-client
+
+[run]
+
+grpc-server
+grpc-client

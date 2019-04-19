@@ -2,6 +2,7 @@ package app
 
 import (
     "context"
+    "github.com/LongMarch7/higo/util/define"
     "github.com/LongMarch7/higo/util/log"
     "github.com/gorilla/mux"
     "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -39,7 +40,6 @@ func defaultServerConfig() ServerOpt{
         ctx: context.Background(),
         maxThreadCount: "1024",
         netType: "tcp",
-        serviceStruct: nil,
         advertiseAddress: "192.168.1.80",
         advertisePort: "10086",
         logger: zap.NewDefaultLogger(),
@@ -51,9 +51,11 @@ func NewServer(opts ...SOption) *Server{
     for _, o := range opts {
         o(&opt)
     }
-    return &Server{
+    server := &Server{
         opts: opt,
     }
+    server.init()
+    return server
 }
 
 func (s *Server)init(){
@@ -73,8 +75,8 @@ func (s *Server)init(){
     s.server = grpc.NewServer(opts...)
 }
 
-func  (s *Server)RegisterServiceServer(register func(s *grpc.Server, srv interface{}), srv interface{}){
-    register(s.server, srv)
+func  (s *Server)RegisterServiceServer(register define.GrpcRegister){
+    register(s.server)
 }
 
 func (s *Server)Run(){
@@ -104,7 +106,7 @@ func (s *Server)Run(){
         s.server.Stop()
     }()
     go func() {
-        http.ListenAndServe(":" + s.opts.advertisePort, tansport.MakeHttpHandler( mux.NewRouter(),tansport.MakeHealthEndpoint()))
+        http.ListenAndServe(":" + s.opts.advertisePort, tansport.MakeMonitoringHttpHandler( mux.NewRouter(),tansport.MakeHealthEndpoint()))
     }()
     go s.server.Serve(s.listenConnector)
     go s.Producer()

@@ -39,6 +39,9 @@ func Name(name string) POption {
 		o.name = name
 	}
 }
+func GetName(p *Prometheus) string {
+	return p.opts.name
+}
 
 func Class(class int8) POption {
 	return func(o *PrometheusOpt) {

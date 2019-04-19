@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package pb;
+
+
+
+//The Setting service definition.
+service Setting {
+ rpc SayHello   (SayHelloRequest  ) returns (SayHelloReply  );
+ rpc Deleteuser (DeleteuserRequest) returns (DeleteuserReply);
+}
+
+message SayHelloRequest {}
+
+message SayHelloReply {}
+
+message DeleteuserRequest {}
+
+message DeleteuserReply {}
+

@@ -1,7 +1,6 @@
 package app
 
 import (
-    "context"
     zaplog "github.com/LongMarch7/go-web/plugin/zap-log"
     "time"
 )
@@ -14,8 +13,6 @@ func defaultClientConfig() ClientOpt{
     return ClientOpt{
         consulAddr: "http://localhost:8500",
         prefix: "bookServer",
-        ctx: context.Background(),
-        factory: defaultReqFactory,
         retryTime: time.Second * 3,
         retryCount: 3,
         passingOnly: true,
