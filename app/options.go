@@ -2,9 +2,11 @@ package app
 
 import (
     "context"
+    "github.com/LongMarch7/higo/middleware"
     "github.com/go-kit/kit/log"
     "github.com/go-kit/kit/sd"
     "time"
+    grpc_transport "github.com/go-kit/kit/transport/grpc"
 )
 
 type ServerOpt struct {
@@ -90,5 +92,8 @@ type ClientOpt struct {
     retryCount      int
     passingOnly     bool
     logger          log.Logger
+    middle          *middleware.MiddlewareServer
+    encodeFunc      grpc_transport.EncodeRequestFunc
+    decodeFUnc      grpc_transport.DecodeResponseFunc
 }
 type COption func(o *ClientOpt)

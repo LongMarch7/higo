@@ -8,15 +8,18 @@ import (
 	"github.com/LongMarch7/higo/middleware/zipkin"
 	"github.com/LongMarch7/higo/tansport"
 	"github.com/go-kit/kit/endpoint"
+	"context"
+	"errors"
 	grpc_transport "github.com/go-kit/kit/transport/grpc"
 )
 type MiddlewareServer struct {
-	opts       middlewareServerOpt
+	opts       middlewareOpt
 	prometheus *prometheus.Prometheus
+	endpoint   endpoint.Endpoint
 }
 
-func defaultServerConfig() middlewareServerOpt{
-	return middlewareServerOpt{
+func defaultServerConfig() middlewareOpt{
+	return middlewareOpt{
 		endpoint: nil,
 		methodName: "default",
 		prefix: "default",
@@ -32,7 +35,7 @@ func NewServerMiddleware() *MiddlewareServer{
 	}
 }
 
-func (m *MiddlewareServer)AddMiddleware(opts ...SMOption) *MiddlewareServer{
+func (m *MiddlewareServer)AddMiddleware(opts ...MOption) *MiddlewareServer{
 	for _, o := range opts {
 		o(&m.opts)
 	}
@@ -41,7 +44,9 @@ func (m *MiddlewareServer)AddMiddleware(opts ...SMOption) *MiddlewareServer{
 		endpoint = m.opts.endpoint
 		endpoint = ratelimit.NewLimiter(m.opts.rOptions...).Middleware()(endpoint)
 
-		endpoint = hystrix.NewHystrix(m.opts.hOptions...).Middleware()(endpoint)
+		hOptions := append([]hystrix.HOption{},hystrix.Name(m.opts.methodName))
+		hOptions = append(hOptions, m.opts.hOptions...)
+		endpoint = hystrix.NewHystrix(hOptions...).Middleware()(endpoint)
 
 		zOptions := append([]zipkin.ZOption{},zipkin.MethodName(m.opts.methodName))
 		zOptions = append(zOptions, zipkin.Name(m.opts.prefix))
@@ -67,19 +72,29 @@ func (m *MiddlewareServer)AddMiddleware(opts ...SMOption) *MiddlewareServer{
 			prometheus.Name(prometheus.GetName(m.prometheus)+"_latency_seconds"),
 			prometheus.Help("Total duration of requests in seconds."),
 		)(endpoint)
-		m.opts.endpoint = endpoint
+		m.endpoint = endpoint
 	}
 	return m
 }
 
+func (m *MiddlewareServer)Endpoint() endpoint.Endpoint {
+	return m.endpoint
+}
+
 func (m *MiddlewareServer)NewServer() *grpc_transport.Server {
-	if m.opts.endpoint != nil {
+	if m.endpoint != nil {
 		return grpc_transport.NewServer(
-			m.opts.endpoint,
+			m.endpoint,
 			m.opts.decodeFun,
 			m.opts.encodeFun,
 		)
 	}else {
-		return nil
+		return grpc_transport.NewServer(
+			func(ctx context.Context, request interface{}) (response interface{}, err error){
+				return nil, errors.New("[m] not found")
+			},
+			m.opts.decodeFun,
+			m.opts.encodeFun,
+		)
 	}
 }

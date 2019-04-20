@@ -30,14 +30,20 @@ func main() {
         app.SCtx(ctx),
         app.SMaxThreadCount(*threadMax),
     )
-    grpcserver := &setting.GrpcServer{}
+    settingServer := &setting.GrpcServer{}
     manager := middleware.NewServerMiddleware()
-    grpcserver.SayHelloHandler = manager.AddMiddleware(
-        middleware.SPrefix(*prefix),
-        middleware.SMethodName("GetBookList"),
-        middleware.SEndpoint(setting.MakeSayHelloServerEndpoint(setting.NewService())),
-        middleware.SPOptions([]prometheus.POption{ prometheus.Name("GetBookList")}),
+    settingServer.SayHelloHandler = manager.AddMiddleware(
+        middleware.Prefix(*prefix),
+        middleware.MethodName("SayHello"),
+        middleware.Endpoint(setting.MakeSayHelloServerEndpoint(setting.NewService())),
+        middleware.POptions([]prometheus.POption{ prometheus.Name("SayHello")}),
         ).NewServer()
-    server.RegisterServiceServer(setting.MakeRegisteFunc(grpcserver))
+    settingServer.DeleteuserHandler = manager.AddMiddleware(
+        middleware.Prefix(*prefix),
+        middleware.MethodName("Deleteuser"),
+        middleware.Endpoint(setting.MakeDeleteuserServerEndpoint(setting.NewService())),
+        middleware.POptions([]prometheus.POption{ prometheus.Name("Deleteuser")}),
+    ).NewServer()
+    server.RegisterServiceServer(setting.MakeRegisteFunc(settingServer))
     server.Run()
 }

@@ -91,6 +91,49 @@ func GetConnect(key string) (*Pool, bool){
     return pool, ok
 }
 
+var ConnectInvalidateTimeout = time.Minute * 3
+
+func GetConnectFromPool(addr string, p *Pool, opt ...grpc.DialOption) (*ConnectManager, error){
+    cManager, ok, _ := p.Queue.Get()
+    if !ok {
+        time.Sleep(time.Microsecond * 100)
+        cManager, ok, _ =  p.Queue.Get()
+    }
+    if !ok{
+        conn, err := grpc.Dial(addr, opt...)
+        if err == nil {
+            cManager = new(ConnectManager)
+            cManager.(*ConnectManager).Conn = conn
+            cManager.(*ConnectManager).InvalidateDeadline = time.Now().Add(ConnectInvalidateTimeout)
+        }
+        return cManager.(*ConnectManager), err
+    }
+    return cManager.(*ConnectManager), nil
+}
+
+func PutConnectToPool(manager *ConnectManager, p *Pool) {
+    var ok = true
+
+    defer func(){
+        if !ok {
+            manager.Conn.Close()
+            manager.Conn = nil
+            manager = nil
+        }
+    }()
+    if time.Now().After(manager.InvalidateDeadline) {
+        ok = false
+        return
+    }
+    manager.InvalidateDeadline = time.Now().Add(ConnectInvalidateTimeout)
+    ok, _ = p.Queue.Put(manager)
+    if !ok {
+        time.Sleep(time.Microsecond)
+        ok, _ =  p.Queue.Put(manager)
+    }
+
+}
+
 func Destroy(){
     lock.Lock()
     for _,value :=range poolManager{
