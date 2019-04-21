@@ -660,10 +660,14 @@ func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 			)
 		}
 
+		parameterDic := jen.Dict{}
+		parameterDic[jen.Id("Srv")] = jen.Lit("pb." + utils.ToCamelCase(g.name))
+		parameterDic[jen.Id("Method")] = jen.Lit(m.Name)
+		parameterDic[jen.Id("NewRlyFunc")] = jen.Func().Params().Params(jen.Id("interface{}")).Values(jen.Return(jen.Id(m.Name+"Response").Values()))
 		body := []jen.Code{
 			jen.Id(rqName).Op(":=").Id(m.Name + "Request").Values(req),
-			jen.Id(ctxN).Op("=").Qual("context","WithValue").Call(jen.Id(ctxN),jen.Lit("srv"),jen.Lit("pb." + utils.ToCamelCase(g.name))),
-			jen.Id(ctxN).Op("=").Qual("context","WithValue").Call(jen.Id(ctxN),jen.Lit("method"),jen.Lit(m.Name)),
+			jen.Id("parameter").Op(":=").Qual("github.com/LongMarch7/higo/service/base","GrpcClientParameter").Values(parameterDic),
+			jen.Id(ctxN).Op("=").Qual("context","WithValue").Call(jen.Id(ctxN),jen.Lit("parameter"),jen.Id("parameter")),
 			jen.List(jen.Id(rpName), jen.Err()).Op(":=").Id(stp).Call(
 				jen.List(jen.Id(ctxN), jen.Id(rqName)),
 			),

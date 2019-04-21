@@ -2,6 +2,7 @@ package setting
 
 import (
 	"context"
+	base "github.com/LongMarch7/higo/service/base"
 	endpoint "github.com/go-kit/kit/endpoint"
 )
 
@@ -74,8 +75,12 @@ type SayHelloFunc func(ctx context.Context, s string) (rs string, err error)
 func SayHelloProxy(e endpoint.Endpoint) SayHelloFunc {
 	return func(ctx context.Context, s string) (rs string, err error) {
 		request := SayHelloRequest{S: s}
-		ctx = context.WithValue(ctx, "srv", "pb.Setting")
-		ctx = context.WithValue(ctx, "method", "SayHello")
+		parameter := base.GrpcClientParameter{
+			Method:     "SayHello",
+			NewRlyFunc: func() interface{} { return SayHelloResponse{} },
+			Srv:        "pb.Setting",
+		}
+		ctx = context.WithValue(ctx, "parameter", parameter)
 		response, err := e(ctx, request)
 		if err != nil {
 			return
@@ -90,8 +95,12 @@ type DeleteuserFunc func(ctx context.Context, s string) (rs string, err error)
 func DeleteuserProxy(e endpoint.Endpoint) DeleteuserFunc {
 	return func(ctx context.Context, s string) (rs string, err error) {
 		request := DeleteuserRequest{S: s}
-		ctx = context.WithValue(ctx, "srv", "pb.Setting")
-		ctx = context.WithValue(ctx, "method", "Deleteuser")
+		parameter := base.GrpcClientParameter{
+			Method:     "Deleteuser",
+			NewRlyFunc: func() interface{} { return DeleteuserResponse{} },
+			Srv:        "pb.Setting",
+		}
+		ctx = context.WithValue(ctx, "parameter", parameter)
 		response, err := e(ctx, request)
 		if err != nil {
 			return

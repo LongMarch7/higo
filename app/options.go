@@ -92,8 +92,75 @@ type ClientOpt struct {
     retryCount      int
     passingOnly     bool
     logger          log.Logger
-    middle          *middleware.MiddlewareServer
+    middleware      *middleware.Middleware
     encodeFunc      grpc_transport.EncodeRequestFunc
-    decodeFUnc      grpc_transport.DecodeResponseFunc
+    decodeFunc      grpc_transport.DecodeResponseFunc
+    zipkinName      string
 }
 type COption func(o *ClientOpt)
+
+func CConsulAddr(consulAddr  string) COption {
+    return func(o *ClientOpt) {
+        o.consulAddr = consulAddr
+    }
+}
+
+func CPrefix(prefix  string) COption {
+    return func(o *ClientOpt) {
+        o.prefix = prefix
+    }
+}
+
+func CFactory(factory  sd.Factory) COption {
+    return func(o *ClientOpt) {
+        o.factory = factory
+    }
+}
+
+func CRetryCount(retryCount int) COption {
+    return func(o *ClientOpt) {
+        o.retryCount = retryCount
+    }
+}
+
+func CRetryTime(retryTime time.Duration) COption {
+    return func(o *ClientOpt) {
+        o.retryTime = retryTime
+    }
+}
+
+func CPassingOnly(passingOnly bool) COption {
+    return func(o *ClientOpt) {
+        o.passingOnly = passingOnly
+    }
+}
+
+func CLogger(logger log.Logger) COption {
+    return func(o *ClientOpt) {
+        o.logger = logger
+    }
+}
+
+func CMiddleware(middleware *middleware.Middleware) COption {
+    return func(o *ClientOpt) {
+        o.middleware = middleware
+    }
+}
+
+func CEncodeFunc(encodeFunc grpc_transport.EncodeRequestFunc) COption {
+    return func(o *ClientOpt) {
+        o.encodeFunc = encodeFunc
+    }
+}
+
+func CDecodeFunc(decodeFunc grpc_transport.DecodeResponseFunc) COption {
+    return func(o *ClientOpt) {
+        o.decodeFunc = decodeFunc
+    }
+}
+
+func CZipkinName(zipkinName string) COption {
+    return func(o *ClientOpt) {
+        o.zipkinName = zipkinName
+    }
+}

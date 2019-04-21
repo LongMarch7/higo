@@ -31,7 +31,7 @@ func main() {
         app.SMaxThreadCount(*threadMax),
     )
     settingServer := &setting.GrpcServer{}
-    manager := middleware.NewServerMiddleware()
+    manager := middleware.NewMiddleware()
     settingServer.SayHelloHandler = manager.AddMiddleware(
         middleware.Prefix(*prefix),
         middleware.MethodName("SayHello"),

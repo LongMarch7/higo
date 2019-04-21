@@ -16,7 +16,8 @@ type basicSettingService struct{}
 
 func (b *basicSettingService) SayHello(ctx context.Context, s string) (rs string, err error) {
 	// TODO implement the business logic of SayHello
-	return rs, err
+	rs = "hello " + s
+	return rs, nil
 }
 
 // NewBasicSettingService returns a naive, stateless implementation of SettingService.

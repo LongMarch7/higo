@@ -11,14 +11,15 @@ import (
 	"context"
 	"errors"
 	grpc_transport "github.com/go-kit/kit/transport/grpc"
+	"strings"
 )
-type MiddlewareServer struct {
+type Middleware struct {
 	opts       middlewareOpt
 	prometheus *prometheus.Prometheus
 	endpoint   endpoint.Endpoint
 }
 
-func defaultServerConfig() middlewareOpt{
+func defaultConfig() middlewareOpt{
 	return middlewareOpt{
 		endpoint: nil,
 		methodName: "default",
@@ -28,14 +29,17 @@ func defaultServerConfig() middlewareOpt{
 	}
 }
 
-func NewServerMiddleware() *MiddlewareServer{
-	opt := defaultServerConfig()
-	return &MiddlewareServer{
+func NewMiddleware(opts ...MOption) *Middleware{
+	opt := defaultConfig()
+	for _, o := range opts {
+		o(&opt)
+	}
+	return &Middleware{
 		opts: opt,
 	}
 }
 
-func (m *MiddlewareServer)AddMiddleware(opts ...MOption) *MiddlewareServer{
+func (m *Middleware)AddMiddleware(opts ...MOption) *Middleware{
 	for _, o := range opts {
 		o(&m.opts)
 	}
@@ -51,7 +55,7 @@ func (m *MiddlewareServer)AddMiddleware(opts ...MOption) *MiddlewareServer{
 		zOptions := append([]zipkin.ZOption{},zipkin.MethodName(m.opts.methodName))
 		zOptions = append(zOptions, zipkin.Name(m.opts.prefix))
 		zOptions = append(zOptions, m.opts.zOptions...)
-		endpoint = zipkin.NewZipkin(zOptions...).Middleware(zipkin.Name(m.opts.methodName))(endpoint)
+		endpoint = zipkin.NewZipkin(zOptions...).Middleware()(endpoint)
 
 		lOptions := append([]logger.LOption{}, logger.MethodName(m.opts.methodName))
 		lOptions = append(lOptions, m.opts.lOptions...)
@@ -64,12 +68,12 @@ func (m *MiddlewareServer)AddMiddleware(opts ...MOption) *MiddlewareServer{
 		lvs := []string{"method", m.opts.methodName,"error"}
 		endpoint = m.prometheus.Middleware(prometheus.Lvs(lvs),
 			prometheus.Class(prometheus.Counter_TYPE),
-			prometheus.Name(prometheus.GetName(m.prometheus)+"_count"),
+			prometheus.Name(strings.Split(prometheus.GetName(m.prometheus),"_")[0]+"_count"),
 			prometheus.Help("Number of requests received"),
 		)(endpoint)
 		endpoint = m.prometheus.Middleware(prometheus.Lvs(lvs),
 			prometheus.Class(prometheus.Histogram_TYPE),
-			prometheus.Name(prometheus.GetName(m.prometheus)+"_latency_seconds"),
+			prometheus.Name(strings.Split(prometheus.GetName(m.prometheus),"_")[0]+"_latency_seconds"),
 			prometheus.Help("Total duration of requests in seconds."),
 		)(endpoint)
 		m.endpoint = endpoint
@@ -77,11 +81,11 @@ func (m *MiddlewareServer)AddMiddleware(opts ...MOption) *MiddlewareServer{
 	return m
 }
 
-func (m *MiddlewareServer)Endpoint() endpoint.Endpoint {
+func (m *Middleware)Endpoint() endpoint.Endpoint {
 	return m.endpoint
 }
 
-func (m *MiddlewareServer)NewServer() *grpc_transport.Server {
+func (m *Middleware)NewServer() *grpc_transport.Server {
 	if m.endpoint != nil {
 		return grpc_transport.NewServer(
 			m.endpoint,

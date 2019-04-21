@@ -6,12 +6,12 @@ import (
     zaplog "github.com/LongMarch7/go-web/plugin/zap-log"
     "github.com/LongMarch7/higo/middleware"
     "github.com/LongMarch7/higo/middleware/zipkin"
+    "github.com/LongMarch7/higo/service/base"
     "github.com/LongMarch7/higo/tansport/pool"
     "github.com/LongMarch7/higo/util/sd/consul"
     "github.com/go-kit/kit/endpoint"
     "github.com/go-kit/kit/sd"
     "github.com/go-kit/kit/sd/lb"
-    "github.com/go-kit/kit/transport/grpc/_grpc_test/pb"
     "github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
     "github.com/hashicorp/consul/api"
     "google.golang.org/grpc"
@@ -29,7 +29,6 @@ type Client struct {
     serviceList           map[string] serviceList
     zipkin                *zipkin.Zipkin
     dialOpts              []grpc.DialOption
-    grpcReply             interface{}
 }
 
 func defaultClientConfig() ClientOpt{
@@ -38,9 +37,10 @@ func defaultClientConfig() ClientOpt{
         prefix: "bookServer",
         retryTime: time.Second * 3,
         retryCount: 3,
+        factory: nil,
         passingOnly: true,
         logger: zaplog.NewDefaultLogger(),
-        middle: nil,
+        middleware: nil,
     }
 }
 
@@ -59,7 +59,7 @@ func NewClient(opts ...COption) *Client{
 }
 
 func (c *Client)init(){
-    zip := zipkin.NewZipkin(zipkin.Name(c.opts.prefix))
+    zip := zipkin.NewZipkin(zipkin.Name(c.opts.zipkinName))
     c.zipkin = zip
     dialOpts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}
     if tracer := zip.GetTracer(); tracer != nil {
@@ -85,13 +85,14 @@ func (c *Client)makeDefaultFactory() sd.Factory{
             defer func() {
                 pool.PutConnectToPool(cManager, poolManage)
             }()
+            parameter := ctx.Value("parameter").(base.GrpcClientParameter)
             grpc_transport.NewClient(
                 cManager.Conn,
-                ctx.Value("srv").(string),
-                ctx.Value("method").(string),
+                parameter.Srv,
+                parameter.Method,
                 c.opts.encodeFunc,
-                c.opts.decodeFUnc,
-                pb.TestResponse{},
+                c.opts.decodeFunc,
+                parameter.NewRlyFunc(),
             ).Endpoint()
             return nil,err
         },nil,nil
@@ -120,6 +121,9 @@ func (c *Client)AddEndpoint(opts ...COption){
     instancer := consul.NewInstancer(client, c.opts.logger, c.opts.prefix, consulTag, c.opts.passingOnly, pool.Update)//pool.Update
 
     //创建端点管理器， 此管理器根据Factory和监听的到实例创建endPoint并订阅instancer的变化动态更新Factory创建的endPoint
+    if c.opts.factory == nil{
+        c.opts.factory = c.makeDefaultFactory()
+    }
     endpointer := sd.NewEndpointer(instancer, c.opts.factory,  c.opts.logger)
 
     //创建负载均衡器
@@ -127,8 +131,8 @@ func (c *Client)AddEndpoint(opts ...COption){
 
     reqEndPoint := lb.Retry(c.opts.retryCount, c.opts.retryTime, balancer)
 
-    if( c.opts.middle != nil ){
-        reqEndPoint = c.opts.middle.AddMiddleware(middleware.Endpoint(reqEndPoint)).Endpoint()
+    if( c.opts.middleware != nil ){
+        reqEndPoint = c.opts.middleware.AddMiddleware(middleware.Endpoint(reqEndPoint)).Endpoint()
     }
     c.serviceList[c.opts.prefix] = serviceList{
         endpoint: reqEndPoint,
