@@ -99,7 +99,7 @@ func (g *GenerateTransport) Generate() (err error) {
 			return err
 		}
 	case "grpc":
-		gp := newGenerateGRPCTransportProto(g.name, g.serviceInterface, g.methods)
+		gp,gp_struct := newGenerateGRPCTransportProto(g.name, g.serviceInterface, g.methods, g.file.Structures)
 		err = gp.Generate()
 		if err != nil {
 			return err
@@ -109,7 +109,7 @@ func (g *GenerateTransport) Generate() (err error) {
 		if err != nil {
 			return err
 		}
-		gb := newGenerateGRPCTransportBase(g.name, g.serviceInterface, g.methods, mth)
+		gb := newGenerateGRPCTransportBase(g.name, g.serviceInterface, g.methods, mth,gp_struct.SubStruct)
 		err = gb.Generate()
 		if err != nil {
 			return err
@@ -641,15 +641,19 @@ type generateGRPCTransportProto struct {
 	pbFilePath        string
 	compileFilePath   string
 	serviceInterface  parser.Interface
+	Structures       []parser.Struct
+	SubStruct        map[string]parser.Struct
 }
 
-func newGenerateGRPCTransportProto(name string, serviceInterface parser.Interface, methods []string) Gen {
+func newGenerateGRPCTransportProto(name string, serviceInterface parser.Interface, methods []string, structures []parser.Struct) (Gen, *generateGRPCTransportProto) {
 	t := &generateGRPCTransportProto{
 		name:             name,
 		methods:          methods,
 		interfaceName:    utils.ToCamelCase(name + "Service"),
 		destPath:         fmt.Sprintf(viper.GetString("gk_grpc_pb_path_format"), utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 		serviceInterface: serviceInterface,
+		Structures: structures,
+		SubStruct: make(map[string] parser.Struct),
 	}
 	t.pbFilePath = path.Join(
 		t.destPath,
@@ -657,7 +661,7 @@ func newGenerateGRPCTransportProto(name string, serviceInterface parser.Interfac
 	)
 	t.compileFilePath = path.Join(t.destPath, viper.GetString("gk_grpc_compile_file_name"))
 	t.fs = fs.Get()
-	return t
+	return t,t
 }
 func (g *generateGRPCTransportProto) Generate() (err error) {
 	g.CreateFolderStructure(g.destPath)
@@ -803,6 +807,78 @@ func (g *generateGRPCTransportProto) getService() *proto.Service {
 	}
 	return nil
 }
+
+func (g *generateGRPCTransportProto)generateNormalField(message* proto.Message,parameters []parser.NamedTypeValue){
+	var count = 1
+	for _, par := range parameters {
+		var fieldName = ""
+		var fieldType = ""
+		var repeated = false
+		switch par.Type{
+		case "context.Context":
+		case "int":
+			fieldName = par.Name
+			fieldType = "int32"
+			count++
+		case "bool":
+			fallthrough
+		case "int32":
+			fallthrough
+		case "int64":
+			fallthrough
+		case "uint32":
+			fallthrough
+		case "uint64":
+			fallthrough
+		case "string":
+			fieldName = par.Name
+			fieldType = par.Type
+		case "[]int":
+			fieldName = par.Name
+			fieldType = "int32"
+			repeated = true
+		case "[]bool":
+			fallthrough
+		case "[]int32":
+			fallthrough
+		case "[]int64":
+			fallthrough
+		case "[]uint32":
+			fallthrough
+		case "[]uint64":
+			fallthrough
+		case "[]string":
+			fieldName = par.Name
+			fieldType = strings.Replace(par.Type,"[]","",-1)
+			repeated = true
+		default:
+			for _,structValue :=range g.Structures{
+				fieldType = strings.Replace(par.Type, "Alias","", -1)
+				if strings.Contains(par.Type,`[]*`){
+					repeated = true
+					fieldType = strings.Replace(fieldType,`[]*`,"",-1)
+				}
+				if structValue.Name == fieldType {
+					fieldName = par.Name
+					_, ok := g.SubStruct[structValue.Name]
+					if !ok {
+						g.SubStruct[structValue.Name] = structValue
+					}
+					fieldType = utils.ToCamelCase(fieldType)
+					break
+				}
+			}
+		}
+		if len(fieldName) > 0 {
+			fieldName = utils.ToLowerFirstCamelCase(fieldName)
+			message.Elements = append(message.Elements,&proto.NormalField{
+				Field: &proto.Field{ Name: fieldName,Type:fieldType,Sequence: count},
+				Repeated: repeated,
+			})
+			count++
+		}
+	}
+}
 func (g *generateGRPCTransportProto) generateRequestResponse() {
 	for _, v := range g.serviceInterface.Methods {
 		foundRequest := false
@@ -818,15 +894,26 @@ func (g *generateGRPCTransportProto) generateRequestResponse() {
 			}
 		}
 		if !foundRequest {
-			g.protoSrc.Elements = append(g.protoSrc.Elements, &proto.Message{
+			message := &proto.Message{
 				Name: v.Name + "Request",
-			})
+			}
+			g.generateNormalField(message,v.Parameters)
+			g.protoSrc.Elements = append(g.protoSrc.Elements, message)
 		}
 		if !foundReply {
-			g.protoSrc.Elements = append(g.protoSrc.Elements, &proto.Message{
+			message := &proto.Message{
 				Name: v.Name + "Reply",
-			})
+			}
+			g.generateNormalField(message,v.Results)
+			g.protoSrc.Elements = append(g.protoSrc.Elements, message)
 		}
+	}
+	for _, sub := range g.SubStruct{
+		message := &proto.Message{
+			Name: utils.ToCamelCase(sub.Name),
+		}
+		g.generateNormalField(message,sub.Vars)
+		g.protoSrc.Elements = append(g.protoSrc.Elements, message)
 	}
 }
 func (g *generateGRPCTransportProto) getServiceRPC(svc *proto.Service) {
@@ -863,15 +950,17 @@ type generateGRPCTransportBase struct {
 	file             *parser.File
 	grpcFilePath     string
 	serviceInterface parser.Interface
+	Structures       map[string]parser.Struct
 }
 
-func newGenerateGRPCTransportBase(name string, serviceInterface parser.Interface, methods []string, allMethods []parser.Method) Gen {
+func newGenerateGRPCTransportBase(name string, serviceInterface parser.Interface, methods []string, allMethods []parser.Method, structures  map[string]parser.Struct) Gen {
 	t := &generateGRPCTransportBase{
 		name:             name,
 		methods:          methods,
 		allMethods:       allMethods,
 		interfaceName:    utils.ToCamelCase(name + "Service"),
 		destPath:         fmt.Sprintf(viper.GetString("gk_grpc_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
+		Structures:       structures,
 		serviceInterface: serviceInterface,
 	}
 	t.filePath = path.Join(t.destPath, viper.GetString("gk_grpc_base_file_name"))
@@ -899,6 +988,9 @@ func (g *generateGRPCTransportBase) Generate() (err error) {
 		"NewGRPCServer makes a set of endpoints available as a gRPC AddServer",
 	})
 	g.code.NewLine()
+	for _, sub := range g.Structures{
+		g.code.Raw().Type().Id(sub.Name+"Alias").Op("=").Qual(pbImport,sub.Name).Line()
+	}
 	existingGrpc := false
 	if b, err := g.fs.Exists(g.grpcFilePath); err != nil {
 		return err

@@ -9,6 +9,7 @@ import (
 )
 
 // NewGRPCServer makes a set of endpoints available as a gRPC AddServer
+type TestAlias = pb.Test
 type GrpcServer struct {
 	SayHelloHandler   grpc.Handler
 	DeleteuserHandler grpc.Handler

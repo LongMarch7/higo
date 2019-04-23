@@ -85,6 +85,21 @@ func (g *GenerateService) Generate() (err error) {
 		logrus.Error("The service has no suitable methods please implement the interface methods")
 		return
 	}
+	for _, structure := range g.file.Structures{
+		if strings.Contains(structure.Name,"basic"){
+			continue
+		}
+		if string(structure.Name[0]) == strings.ToLower(string(structure.Name[0])){
+			logrus.Warnf("The struct '%s' is private", structure.Name)
+			return
+		}
+		for _, field := range structure.Vars{
+			if string(field.Name[0]) == strings.ToLower(string(field.Name[0])){
+				logrus.Warnf("The struct field '%s' is private", field.Name)
+				return
+			}
+		}
+	}
 	g.generateServiceStruct()
 	g.generateServiceMethods()
 	g.generateNewBasicStructMethod()
@@ -223,6 +238,7 @@ func (g *GenerateService) generateNewBasicStructMethod() {
 			return
 		}
 	}
+
 	g.pg.Raw().Commentf(
 		"New%s returns a naive, stateless implementation of %s.",
 		utils.ToCamelCase(g.serviceStructName),
@@ -491,6 +507,7 @@ type generateServiceEndpoints struct {
 	interfaceName     string
 	destPath          string
 	filePath          string
+	pbPath            string
 	serviceImports    []parser.NamedTypeValue
 	serviceInterface  parser.Interface
 	file              *parser.File
@@ -504,9 +521,11 @@ func newGenerateServiceEndpoints(name string, imports []parser.NamedTypeValue,
 		name:             name,
 		interfaceName:    utils.ToCamelCase(name + "Service"),
 		destPath:         fmt.Sprintf(viper.GetString("gk_endpoint_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
+		pbPath:           fmt.Sprintf(viper.GetString("gk_grpc_pb_path_format"), utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
 		serviceInterface: serviceInterface,
 		serviceImports:   imports,
 	}
+	gsm.pbPath = strings.Replace(gsm.pbPath,"//","/",-1)
 	gsm.filePath = path.Join(gsm.destPath, viper.GetString("gk_endpoint_file_name"))
 	gsm.generateDefaults = generateDefaults
 	gsm.srcFile = jen.NewFilePath(gsm.destPath)
@@ -656,16 +675,16 @@ func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 			rt = append(rt, jen.Id(p.Name))
 			resList = append(
 				resList,
-				jen.Id(rpName).Dot("").Call(jen.Id(m.Name+"Response")).Dot(utils.ToCamelCase(p.Name)),
+				jen.Id(rpName).Dot("").Call(jen.Qual(g.pbPath,m.Name+"Reply")).Dot(utils.ToCamelCase(p.Name)),
 			)
 		}
 
 		parameterDic := jen.Dict{}
 		parameterDic[jen.Id("Srv")] = jen.Lit("pb." + utils.ToCamelCase(g.name))
 		parameterDic[jen.Id("Method")] = jen.Lit(m.Name)
-		parameterDic[jen.Id("NewRlyFunc")] = jen.Func().Params().Params(jen.Id("interface{}")).Values(jen.Return(jen.Id(m.Name+"Response").Values()))
+		parameterDic[jen.Id("NewRlyFunc")] = jen.Func().Params().Params(jen.Id("interface{}")).Values(jen.Return(jen.Qual(g.pbPath,m.Name+"Reply").Values()))
 		body := []jen.Code{
-			jen.Id(rqName).Op(":=").Id(m.Name + "Request").Values(req),
+			jen.Id(rqName).Op(":=").Qual(g.pbPath,m.Name + "Request").Values(req),
 			jen.Id("parameter").Op(":=").Qual("github.com/LongMarch7/higo/service/base","GrpcClientParameter").Values(parameterDic),
 			jen.Id(ctxN).Op("=").Qual("context","WithValue").Call(jen.Id(ctxN),jen.Lit("parameter"),jen.Id("parameter")),
 			jen.List(jen.Id(rpName), jen.Err()).Op(":=").Id(stp).Call(
@@ -789,21 +808,21 @@ func (g *generateServiceEndpoints) generateMethodEndpoint() (err error) {
 			respParam[jen.Id(utils.ToCamelCase(p.Name))] = jen.Id(p.Name)
 			retList = append(retList, jen.Id(p.Name))
 		}
-		requestStructExists := false
-		responseStructExists := false
+		//requestStructExists := false
+		//responseStructExists := false
 		makeMethdExists := false
 		failedFound := false
-		for _, v := range g.file.Structures {
-			if v.Name == m.Name+"Request" {
-				requestStructExists = true
-			}
-			if v.Name == m.Name+"Response" {
-				responseStructExists = true
-			}
-			if requestStructExists && responseStructExists {
-				break
-			}
-		}
+		//for _, v := range g.file.Structures {
+		//	if v.Name == m.Name+"Request" {
+		//		requestStructExists = true
+		//	}
+		//	if v.Name == m.Name+"Response" {
+		//		responseStructExists = true
+		//	}
+		//	if requestStructExists && responseStructExists {
+		//		break
+		//	}
+		//}
 		for _, v := range g.file.Methods {
 			if v.Name == "Make"+m.Name+"ServerEndpoint" {
 				makeMethdExists = true
@@ -815,32 +834,32 @@ func (g *generateServiceEndpoints) generateMethodEndpoint() (err error) {
 				break
 			}
 		}
-		if !requestStructExists {
-			g.code.Raw().Commentf("%sRequest collects the request parameters for the %s method.", m.Name, m.Name)
-			g.code.NewLine()
-			g.code.appendStruct(
-				m.Name+"Request",
-				reqFields...,
-			)
-			g.code.NewLine()
-		}
-		if !responseStructExists {
-			g.code.Raw().Commentf("%sResponse collects the response parameters for the %s method.", m.Name, m.Name)
-			g.code.NewLine()
-			g.code.appendStruct(
-				m.Name+"Response",
-				resFields...,
-			)
-			g.code.NewLine()
-		}
+		//if !requestStructExists {
+		//	g.code.Raw().Commentf("%sRequest collects the request parameters for the %s method.", m.Name, m.Name)
+		//	g.code.NewLine()
+		//	g.code.appendStruct(
+		//		m.Name+"Request",
+		//		reqFields...,
+		//	)
+		//	g.code.NewLine()
+		//}
+		//if !responseStructExists {
+		//	g.code.Raw().Commentf("%sResponse collects the response parameters for the %s method.", m.Name, m.Name)
+		//	g.code.NewLine()
+		//	g.code.appendStruct(
+		//		m.Name+"Response",
+		//		resFields...,
+		//	)
+		//	g.code.NewLine()
+		//}
 		if !makeMethdExists {
 			pt := NewPartialGenerator(nil)
 			bd := []jen.Code{
 				jen.Id("req").Op(":=").Id("request").Dot("").Call(
-					jen.Id(m.Name + "Request"),
+					jen.Qual(g.pbPath,m.Name + "Request"),
 				),
 				jen.List(retList...).Op(":=").Id("s").Dot(m.Name).Call(mCallParam...),
-				jen.Return(jen.Id(m.Name+"Response").Values(respParam), jen.Nil()),
+				jen.Return(jen.Qual(g.pbPath,m.Name+"Reply").Values(respParam), jen.Nil()),
 			}
 			if len(mCallParam) == 1 {
 				bd = bd[1:]

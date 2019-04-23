@@ -12,7 +12,6 @@ func (g *GrpcServer) SayHello(ctx context.Context, req *pb.SayHelloRequest) (*pb
 	}
 	return rep.(*pb.SayHelloReply), nil
 }
-
 func (g *GrpcServer) Deleteuser(ctx context.Context, req *pb.DeleteuserRequest) (*pb.DeleteuserReply, error) {
 	_, rep, err := g.DeleteuserHandler.ServeGRPC(ctx, req)
 	if err != nil {

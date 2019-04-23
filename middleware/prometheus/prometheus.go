@@ -90,44 +90,44 @@ func (p *Prometheus)Middleware(opts ...POption) endpoint.Middleware {
 func (p *Prometheus)AddObj() {
 	switch p.opts.class{
 	case Counter_TYPE:
-		requestCount := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-			Namespace: p.opts.namespace,
-			Subsystem: p.opts.subsystem,
-			Name:      p.opts.name,
-			Help:      p.opts.help,
-		}, p.opts.fieldKeys)
 		if _, ok := p.Counter[p.opts.subsystem + p.opts.name]; !ok {
+			requestCount := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+				Namespace: p.opts.namespace,
+				Subsystem: p.opts.subsystem,
+				Name:      p.opts.name,
+				Help:      p.opts.help,
+			}, p.opts.fieldKeys)
 			p.Counter[p.opts.subsystem+p.opts.name] = requestCount
 		}
 	case Summary_TYPE:
-		requestSummary := kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
+		if _, ok := p.Summary[p.opts.subsystem + p.opts.name]; !ok {
+			requestSummary := kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
 			Namespace: p.opts.namespace,
 			Subsystem: p.opts.subsystem,
 			Name:      p.opts.name,
 			Help:      p.opts.help,
 		}, p.opts.fieldKeys)
-		if _, ok := p.Summary[p.opts.subsystem + p.opts.name]; !ok {
 			p.Summary[p.opts.subsystem+p.opts.name] = requestSummary
 		}
 	case Gauge_TYPE:
-		requestGauge := kitprometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
-			Namespace: p.opts.namespace,
-			Subsystem: p.opts.subsystem,
-			Name:      p.opts.name,
-			Help:      p.opts.help,
-		}, p.opts.fieldKeys)
 		if _, ok := p.Gauge[p.opts.subsystem + p.opts.name]; !ok {
+			requestGauge := kitprometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+				Namespace: p.opts.namespace,
+				Subsystem: p.opts.subsystem,
+				Name:      p.opts.name,
+				Help:      p.opts.help,
+			}, p.opts.fieldKeys)
 			p.Gauge[p.opts.subsystem+p.opts.name] = requestGauge
 		}
 	case Histogram_TYPE:
-		requestHistogram := kitprometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
-			Namespace: p.opts.namespace,
-			Subsystem: p.opts.subsystem,
-			Name:      p.opts.name,
-			Help:      p.opts.help,
-			Buckets: p.opts.buckets,
-		}, p.opts.fieldKeys)
 		if _, ok := p.Histogram[p.opts.subsystem + p.opts.name]; !ok {
+			requestHistogram := kitprometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+				Namespace: p.opts.namespace,
+				Subsystem: p.opts.subsystem,
+				Name:      p.opts.name,
+				Help:      p.opts.help,
+				Buckets: p.opts.buckets,
+			}, p.opts.fieldKeys)
 			p.Histogram[p.opts.subsystem+p.opts.name] = requestHistogram
 		}
 	}

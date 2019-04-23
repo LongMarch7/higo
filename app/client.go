@@ -18,6 +18,7 @@ import (
     grpc_transport "github.com/go-kit/kit/transport/grpc"
     "io"
     "time"
+    local_transport "github.com/LongMarch7/higo/tansport"
 )
 
 type serviceList struct{
@@ -41,6 +42,8 @@ func defaultClientConfig() ClientOpt{
         passingOnly: true,
         logger: zaplog.NewDefaultLogger(),
         middleware: nil,
+        encodeFunc: local_transport.DefaultGrpcEncodeRequestFunc,
+        decodeFunc: local_transport.DefaultGrpcDecodeResponseFunc,
     }
 }
 
@@ -86,7 +89,7 @@ func (c *Client)makeDefaultFactory() sd.Factory{
                 pool.PutConnectToPool(cManager, poolManage)
             }()
             parameter := ctx.Value("parameter").(base.GrpcClientParameter)
-            grpc_transport.NewClient(
+            grpcEndpoint := grpc_transport.NewClient(
                 cManager.Conn,
                 parameter.Srv,
                 parameter.Method,
@@ -94,7 +97,7 @@ func (c *Client)makeDefaultFactory() sd.Factory{
                 c.opts.decodeFunc,
                 parameter.NewRlyFunc(),
             ).Endpoint()
-            return nil,err
+            return grpcEndpoint(ctx,request)
         },nil,nil
     }
 }

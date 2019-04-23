@@ -13,3 +13,6 @@ modify service.go file
 [generate server]
 kit-cli g s admin -t grpc
 kit-cli g s setting -t grpc -p admin //generate a setting service in admin parent service
+
+[Remarks]
+if function has struct  must add "Alias" Keyword

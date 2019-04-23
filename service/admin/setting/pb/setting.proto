@@ -10,11 +10,28 @@ service Setting {
  rpc Deleteuser (DeleteuserRequest) returns (DeleteuserReply);
 }
 
-message SayHelloRequest {}
+message SayHelloRequest {
+ repeated Test s = 1;
+}
 
-message SayHelloReply {}
+message SayHelloReply {
+ string rs  = 1;
+ string err = 2;
+}
 
-message DeleteuserRequest {}
+message DeleteuserRequest {
+ string s = 1;
+}
 
-message DeleteuserReply {}
+message DeleteuserReply {
+ string rs  = 1;
+ string err = 2;
+}
+
+message Test {
+          string test1 = 1;
+          int32  test2 = 3;
+          bool   test3 = 4;
+ repeated string test4 = 5;
+}
 

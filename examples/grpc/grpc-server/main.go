@@ -13,7 +13,7 @@ import (
 
 func main() {
     etcdServer := flag.String("e","http://localhost:8500","etcd service addr")
-    prefix := flag.String("n","bookServer","prefix value")
+    prefix := flag.String("n","SettingServer","prefix value")
     serviceAddress := flag.String("s","127.0.0.1","server addr")
     servicePort := flag.Int("p",0,"server port")
     threadMax := flag.String("c","1024","server thread pool max thread count")
@@ -34,13 +34,13 @@ func main() {
     manager := middleware.NewMiddleware()
     settingServer.SayHelloHandler = manager.AddMiddleware(
         middleware.Prefix(*prefix),
-        middleware.MethodName("SayHello"),
+        middleware.MethodName("SettingServer"),
         middleware.Endpoint(setting.MakeSayHelloServerEndpoint(setting.NewService())),
         middleware.POptions([]prometheus.POption{ prometheus.Name("SayHello")}),
         ).NewServer()
     settingServer.DeleteuserHandler = manager.AddMiddleware(
         middleware.Prefix(*prefix),
-        middleware.MethodName("Deleteuser"),
+        middleware.MethodName("SettingServer"),
         middleware.Endpoint(setting.MakeDeleteuserServerEndpoint(setting.NewService())),
         middleware.POptions([]prometheus.POption{ prometheus.Name("Deleteuser")}),
     ).NewServer()

@@ -62,7 +62,7 @@ func (m *Middleware)AddMiddleware(opts ...MOption) *Middleware{
 		endpoint = logger.NewLogger(lOptions...).Middleware()(endpoint)
 
 		pOptions := append([]prometheus.POption{}, prometheus.Subsystem(m.opts.prefix))
-		pOptions = append([]prometheus.POption{}, prometheus.Name(m.opts.methodName))
+		pOptions = append(pOptions, prometheus.Name(m.opts.methodName))
 		pOptions = append(pOptions, m.opts.pOptions...)
 		m.prometheus = prometheus.NewPrometheus(pOptions...)
 		lvs := []string{"method", m.opts.methodName,"error"}

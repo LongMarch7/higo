@@ -32,7 +32,7 @@ Loop:
 
 func main() {
 	etcdServer := flag.String("e","http://localhost:8500","etcd service addr")
-	prefix := flag.String("p","sayHelloService","prefix value")
+	prefix := flag.String("p","SettingServer","prefix value")
 	flag.Parse()
 
 
@@ -41,11 +41,13 @@ func main() {
 	mw := middleware.NewMiddleware(middleware.Prefix("gateway"),middleware.MethodName("request"))
 	client := app.NewClient(
 		app.CConsulAddr(*etcdServer),
-		app.CPrefix(*prefix),
 		app.CRetryCount(3),
-		app.CMiddleware(mw),
 		app.CRetryTime(time.Second * 3),
 	)
-	setting.SayHelloProxy(client.GetClientEndpoint("sayHelloService"))(context.Background(),"jack")
+	client.AddEndpoint(app.CMiddleware(mw),app.CPrefix(*prefix))
+	for {
+		setting.SayHelloProxy(client.GetClientEndpoint("SettingServer"))(context.Background(),"jack")
+		time.Sleep(time.Second)
+	}
 }
 
