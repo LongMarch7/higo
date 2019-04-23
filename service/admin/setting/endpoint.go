@@ -2,7 +2,6 @@ package setting
 
 import (
 	"context"
-
 	pb "github.com/LongMarch7/higo/service/admin/setting/pb"
 	base "github.com/LongMarch7/higo/service/base"
 	endpoint "github.com/go-kit/kit/endpoint"
@@ -11,9 +10,9 @@ import (
 // MakeSayHelloServerEndpoint returns an endpoint that invokes SayHello on the service.
 func MakeSayHelloServerEndpoint(s SettingService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(pb.SayHelloRequest)
+		req := request.(*pb.SayHelloRequest)
 		rs, err := s.SayHello(ctx, req.S)
-		return pb.SayHelloReply{
+		return &pb.SayHelloReply{
 			Err: err,
 			Rs:  rs,
 		}, nil
@@ -23,9 +22,9 @@ func MakeSayHelloServerEndpoint(s SettingService) endpoint.Endpoint {
 // MakeDeleteuserServerEndpoint returns an endpoint that invokes Deleteuser on the service.
 func MakeDeleteuserServerEndpoint(s SettingService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(pb.DeleteuserRequest)
+		req := request.(*pb.DeleteuserRequest)
 		rs, err := s.Deleteuser(ctx, req.S)
-		return pb.DeleteuserReply{
+		return &pb.DeleteuserReply{
 			Err: err,
 			Rs:  rs,
 		}, nil
@@ -33,14 +32,14 @@ func MakeDeleteuserServerEndpoint(s SettingService) endpoint.Endpoint {
 }
 
 // SayHello implements Service. Primarily useful in a client.
-type SayHelloFunc func(ctx context.Context, s []*TestAlias) (rs string, err string)
+type SayHelloFunc func(ctx context.Context, s *TestAlias) (rs string, err string)
 
 func SayHelloProxy(e endpoint.Endpoint) SayHelloFunc {
-	return func(ctx context.Context, s []*TestAlias) (rs string, err string) {
-		request := pb.SayHelloRequest{S: s}
+	return func(ctx context.Context, s *TestAlias) (rs string, err string) {
+		request := &pb.SayHelloRequest{S: s}
 		parameter := base.GrpcClientParameter{
 			Method:     "SayHello",
-			NewRlyFunc: func() interface{} { return pb.SayHelloReply{} },
+			NewRlyFunc: func() interface{} { return &pb.SayHelloReply{} },
 			Srv:        "pb.Setting",
 		}
 		ctx = context.WithValue(ctx, "parameter", parameter)
@@ -49,7 +48,7 @@ func SayHelloProxy(e endpoint.Endpoint) SayHelloFunc {
 			err = grpcErr.Error()
 			return
 		}
-		return response.(pb.SayHelloReply).Rs, response.(pb.SayHelloReply).Err
+		return response.(*pb.SayHelloReply).Rs, response.(*pb.SayHelloReply).Err
 	}
 }
 
@@ -58,10 +57,10 @@ type DeleteuserFunc func(ctx context.Context, s string) (rs string, err string)
 
 func DeleteuserProxy(e endpoint.Endpoint) DeleteuserFunc {
 	return func(ctx context.Context, s string) (rs string, err string) {
-		request := pb.DeleteuserRequest{S: s}
+		request := &pb.DeleteuserRequest{S: s}
 		parameter := base.GrpcClientParameter{
 			Method:     "Deleteuser",
-			NewRlyFunc: func() interface{} { return pb.DeleteuserReply{} },
+			NewRlyFunc: func() interface{} { return &pb.DeleteuserReply{} },
 			Srv:        "pb.Setting",
 		}
 		ctx = context.WithValue(ctx, "parameter", parameter)
@@ -70,6 +69,6 @@ func DeleteuserProxy(e endpoint.Endpoint) DeleteuserFunc {
 			err = grpcErr.Error()
 			return
 		}
-		return response.(pb.DeleteuserReply).Rs, response.(pb.DeleteuserReply).Err
+		return response.(*pb.DeleteuserReply).Rs, response.(*pb.DeleteuserReply).Err
 	}
 }

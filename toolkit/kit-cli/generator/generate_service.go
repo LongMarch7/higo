@@ -675,16 +675,16 @@ func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 			rt = append(rt, jen.Id(p.Name))
 			resList = append(
 				resList,
-				jen.Id(rpName).Dot("").Call(jen.Qual(g.pbPath,m.Name+"Reply")).Dot(utils.ToCamelCase(p.Name)),
+				jen.Id(rpName).Dot("").Call(jen.Id("*").Qual(g.pbPath,m.Name+"Reply")).Dot(utils.ToCamelCase(p.Name)),
 			)
 		}
 
 		parameterDic := jen.Dict{}
 		parameterDic[jen.Id("Srv")] = jen.Lit("pb." + utils.ToCamelCase(g.name))
 		parameterDic[jen.Id("Method")] = jen.Lit(m.Name)
-		parameterDic[jen.Id("NewRlyFunc")] = jen.Func().Params().Params(jen.Id("interface{}")).Values(jen.Return(jen.Qual(g.pbPath,m.Name+"Reply").Values()))
+		parameterDic[jen.Id("NewRlyFunc")] = jen.Func().Params().Params(jen.Id("interface{}")).Values(jen.Return(jen.Id("&").Qual(g.pbPath,m.Name+"Reply").Values()))
 		body := []jen.Code{
-			jen.Id(rqName).Op(":=").Qual(g.pbPath,m.Name + "Request").Values(req),
+			jen.Id(rqName).Op(":=").Id("&").Qual(g.pbPath,m.Name + "Request").Values(req),
 			jen.Id("parameter").Op(":=").Qual("github.com/LongMarch7/higo/service/base","GrpcClientParameter").Values(parameterDic),
 			jen.Id(ctxN).Op("=").Qual("context","WithValue").Call(jen.Id(ctxN),jen.Lit("parameter"),jen.Id("parameter")),
 			jen.List(jen.Id(rpName), jen.Id("grpcErr")).Op(":=").Id(stp).Call(
@@ -857,10 +857,10 @@ func (g *generateServiceEndpoints) generateMethodEndpoint() (err error) {
 			pt := NewPartialGenerator(nil)
 			bd := []jen.Code{
 				jen.Id("req").Op(":=").Id("request").Dot("").Call(
-					jen.Qual(g.pbPath,m.Name + "Request"),
+					jen.Id("*").Qual(g.pbPath,m.Name + "Request"),
 				),
 				jen.List(retList...).Op(":=").Id("s").Dot(m.Name).Call(mCallParam...),
-				jen.Return(jen.Qual(g.pbPath,m.Name+"Reply").Values(respParam), jen.Nil()),
+				jen.Return(jen.Id("&").Qual(g.pbPath,m.Name+"Reply").Values(respParam), jen.Nil()),
 			}
 			if len(mCallParam) == 1 {
 				bd = bd[1:]

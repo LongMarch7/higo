@@ -1,16 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"github.com/LongMarch7/higo/app"
 	"github.com/LongMarch7/higo/middleware"
 	"github.com/LongMarch7/higo/service/admin/setting"
-	"google.golang.org/grpc/grpclog"
-	"github.com/LongMarch7/higo/app"
 	"github.com/LongMarch7/higo/util/log"
+	"google.golang.org/grpc/grpclog"
 	"os"
 	"sync"
 	"time"
-	"context"
 )
 
 var c chan os.Signal
@@ -46,7 +46,8 @@ func main() {
 	)
 	client.AddEndpoint(app.CMiddleware(mw),app.CPrefix(*prefix))
 	for {
-		setting.SayHelloProxy(client.GetClientEndpoint("SettingServer"))(context.Background(),"jack")
+		rs, err := setting.SayHelloProxy(client.GetClientEndpoint("SettingServer"))(context.Background(),&setting.TestAlias{Test1: "jack"})
+		grpclog.Info("[rs]=",rs," [err]=",err," [len(err)]",len(err))
 		time.Sleep(time.Second)
 	}
 }

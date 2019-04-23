@@ -11,7 +11,7 @@ service Setting {
 }
 
 message SayHelloRequest {
- repeated Test s = 1;
+ Test s = 1;
 }
 
 message SayHelloReply {

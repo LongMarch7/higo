@@ -857,7 +857,10 @@ func (g *generateGRPCTransportProto)generateNormalField(message* proto.Message,p
 				if strings.Contains(par.Type,`[]*`){
 					repeated = true
 					fieldType = strings.Replace(fieldType,`[]*`,"",-1)
+				}else if strings.Contains(par.Type,`*`){
+					fieldType = strings.Replace(fieldType,`*`,"",-1)
 				}
+
 				if structValue.Name == fieldType {
 					fieldName = par.Name
 					_, ok := g.SubStruct[structValue.Name]

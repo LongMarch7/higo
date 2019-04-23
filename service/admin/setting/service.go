@@ -15,13 +15,13 @@ type Test struct {
 type SettingService interface {
 	// Add your methods here
 	// e.x: Foo(ctx context.Context,s string)(rs string, err error)
-	SayHello(ctx context.Context, s []*TestAlias) (rs string, err string)
+	SayHello(ctx context.Context, s *TestAlias) (rs string, err string)
 	Deleteuser(ctx context.Context, s string) (rs string, err string)
 }
 type basicSettingService struct{}
 
-func (b *basicSettingService) SayHello(ctx context.Context, s []*TestAlias) (rs string, err string) {
-	// TODO implement the business logic of SayHello
+func (b *basicSettingService) SayHello(ctx context.Context, s *TestAlias) (rs string, err string) {
+	rs = "hello " + s.Test1
 	return rs, err
 }
 func (b *basicSettingService) Deleteuser(ctx context.Context, s string) (rs string, err string) {
