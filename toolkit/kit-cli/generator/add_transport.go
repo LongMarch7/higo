@@ -99,7 +99,7 @@ func (g *GenerateTransport) Generate() (err error) {
 			return err
 		}
 	case "grpc":
-		gp,gp_struct := newGenerateGRPCTransportProto(g.name, g.serviceInterface, g.methods, g.file.Structures)
+		gp := newGenerateGRPCTransportProto(g.name, g.serviceInterface, g.methods, g.file.Structures)
 		err = gp.Generate()
 		if err != nil {
 			return err
@@ -109,7 +109,7 @@ func (g *GenerateTransport) Generate() (err error) {
 		if err != nil {
 			return err
 		}
-		gb := newGenerateGRPCTransportBase(g.name, g.serviceInterface, g.methods, mth,gp_struct.SubStruct)
+		gb := newGenerateGRPCTransportBase(g.name, g.serviceInterface, g.methods, mth,g.file.Structures)
 		err = gb.Generate()
 		if err != nil {
 			return err
@@ -645,7 +645,7 @@ type generateGRPCTransportProto struct {
 	SubStruct        map[string]parser.Struct
 }
 
-func newGenerateGRPCTransportProto(name string, serviceInterface parser.Interface, methods []string, structures []parser.Struct) (Gen, *generateGRPCTransportProto) {
+func newGenerateGRPCTransportProto(name string, serviceInterface parser.Interface, methods []string, structures []parser.Struct) Gen {
 	t := &generateGRPCTransportProto{
 		name:             name,
 		methods:          methods,
@@ -661,7 +661,7 @@ func newGenerateGRPCTransportProto(name string, serviceInterface parser.Interfac
 	)
 	t.compileFilePath = path.Join(t.destPath, viper.GetString("gk_grpc_compile_file_name"))
 	t.fs = fs.Get()
-	return t,t
+	return t
 }
 func (g *generateGRPCTransportProto) Generate() (err error) {
 	g.CreateFolderStructure(g.destPath)
@@ -950,10 +950,10 @@ type generateGRPCTransportBase struct {
 	file             *parser.File
 	grpcFilePath     string
 	serviceInterface parser.Interface
-	Structures       map[string]parser.Struct
+	Structures       []parser.Struct
 }
 
-func newGenerateGRPCTransportBase(name string, serviceInterface parser.Interface, methods []string, allMethods []parser.Method, structures  map[string]parser.Struct) Gen {
+func newGenerateGRPCTransportBase(name string, serviceInterface parser.Interface, methods []string, allMethods []parser.Method, structures  []parser.Struct) Gen {
 	t := &generateGRPCTransportBase{
 		name:             name,
 		methods:          methods,
@@ -989,6 +989,9 @@ func (g *generateGRPCTransportBase) Generate() (err error) {
 	})
 	g.code.NewLine()
 	for _, sub := range g.Structures{
+		if strings.Contains(sub.Name,"basic") {
+			continue
+		}
 		g.code.Raw().Type().Id(sub.Name+"Alias").Op("=").Qual(pbImport,sub.Name).Line()
 	}
 	existingGrpc := false

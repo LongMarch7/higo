@@ -687,11 +687,12 @@ func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 			jen.Id(rqName).Op(":=").Qual(g.pbPath,m.Name + "Request").Values(req),
 			jen.Id("parameter").Op(":=").Qual("github.com/LongMarch7/higo/service/base","GrpcClientParameter").Values(parameterDic),
 			jen.Id(ctxN).Op("=").Qual("context","WithValue").Call(jen.Id(ctxN),jen.Lit("parameter"),jen.Id("parameter")),
-			jen.List(jen.Id(rpName), jen.Err()).Op(":=").Id(stp).Call(
+			jen.List(jen.Id(rpName), jen.Id("grpcErr")).Op(":=").Id(stp).Call(
 				jen.List(jen.Id(ctxN), jen.Id(rqName)),
 			),
 			jen.If(
-				jen.Err().Op("!=").Nil().Block(
+				jen.Id("grpcErr").Op("!=").Nil().Block(
+					jen.Err().Op("=").Id("grpcErr").Dot("Error").Call(),
 					jen.Return(),
 				),
 			),

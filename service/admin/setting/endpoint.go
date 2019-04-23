@@ -2,6 +2,7 @@ package setting
 
 import (
 	"context"
+
 	pb "github.com/LongMarch7/higo/service/admin/setting/pb"
 	base "github.com/LongMarch7/higo/service/base"
 	endpoint "github.com/go-kit/kit/endpoint"
@@ -43,8 +44,9 @@ func SayHelloProxy(e endpoint.Endpoint) SayHelloFunc {
 			Srv:        "pb.Setting",
 		}
 		ctx = context.WithValue(ctx, "parameter", parameter)
-		response, err := e(ctx, request)
-		if err != nil {
+		response, grpcErr := e(ctx, request)
+		if grpcErr != nil {
+			err = grpcErr.Error()
 			return
 		}
 		return response.(pb.SayHelloReply).Rs, response.(pb.SayHelloReply).Err
@@ -63,8 +65,9 @@ func DeleteuserProxy(e endpoint.Endpoint) DeleteuserFunc {
 			Srv:        "pb.Setting",
 		}
 		ctx = context.WithValue(ctx, "parameter", parameter)
-		response, err := e(ctx, request)
-		if err != nil {
+		response, grpcErr := e(ctx, request)
+		if grpcErr != nil {
+			err = grpcErr.Error()
 			return
 		}
 		return response.(pb.DeleteuserReply).Rs, response.(pb.DeleteuserReply).Err
