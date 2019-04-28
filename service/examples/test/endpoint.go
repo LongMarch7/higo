@@ -1,15 +1,15 @@
-package setting
+package test
 
 import (
 	"context"
 
-	pb "github.com/LongMarch7/higo/service/admin/setting/pb"
 	base "github.com/LongMarch7/higo/service/base"
+	pb "github.com/LongMarch7/higo/service/examples/test/pb"
 	endpoint "github.com/go-kit/kit/endpoint"
 )
 
 // MakeSayHelloServerEndpoint returns an endpoint that invokes SayHello on the service.
-func MakeSayHelloServerEndpoint(s SettingService) endpoint.Endpoint {
+func MakeSayHelloServerEndpoint(s TestService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*pb.SayHelloRequest)
 		rs, err := s.SayHello(ctx, req.S)
@@ -21,7 +21,7 @@ func MakeSayHelloServerEndpoint(s SettingService) endpoint.Endpoint {
 }
 
 // MakeDeleteuserServerEndpoint returns an endpoint that invokes Deleteuser on the service.
-func MakeDeleteuserServerEndpoint(s SettingService) endpoint.Endpoint {
+func MakeDeleteuserServerEndpoint(s TestService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*pb.DeleteuserRequest)
 		rs, err := s.Deleteuser(ctx, req.S)
@@ -32,16 +32,28 @@ func MakeDeleteuserServerEndpoint(s SettingService) endpoint.Endpoint {
 	}
 }
 
+// MakeTestArrayServerEndpoint returns an endpoint that invokes TestArray on the service.
+func MakeTestArrayServerEndpoint(s TestService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(*pb.TestArrayRequest)
+		rs, err := s.TestArray(ctx, req.S)
+		return &pb.TestArrayReply{
+			Err: err,
+			Rs:  rs,
+		}, nil
+	}
+}
+
 // SayHello implements Service. Primarily useful in a client.
-type SayHelloFunc func(ctx context.Context, s *TestAlias) (rs string, err string)
+type SayHelloFunc func(ctx context.Context, s *TestStrucAlias) (rs string, err string)
 
 func SayHelloProxy(e endpoint.Endpoint) SayHelloFunc {
-	return func(ctx context.Context, s *TestAlias) (rs string, err string) {
+	return func(ctx context.Context, s *TestStrucAlias) (rs string, err string) {
 		request := &pb.SayHelloRequest{S: s}
 		parameter := base.GrpcClientParameter{
 			Method:     "SayHello",
 			NewRlyFunc: func() interface{} { return &pb.SayHelloReply{} },
-			Srv:        "pb.Setting",
+			Srv:        "pb.Test",
 		}
 		ctx = context.WithValue(ctx, "parameter", parameter)
 		response, grpcErr := e(ctx, request)
@@ -62,7 +74,7 @@ func DeleteuserProxy(e endpoint.Endpoint) DeleteuserFunc {
 		parameter := base.GrpcClientParameter{
 			Method:     "Deleteuser",
 			NewRlyFunc: func() interface{} { return &pb.DeleteuserReply{} },
-			Srv:        "pb.Setting",
+			Srv:        "pb.Test",
 		}
 		ctx = context.WithValue(ctx, "parameter", parameter)
 		response, grpcErr := e(ctx, request)
@@ -71,5 +83,26 @@ func DeleteuserProxy(e endpoint.Endpoint) DeleteuserFunc {
 			return
 		}
 		return response.(*pb.DeleteuserReply).Rs, response.(*pb.DeleteuserReply).Err
+	}
+}
+
+// TestArray implements Service. Primarily useful in a client.
+type TestArrayFunc func(ctx context.Context, s []*TestStrucAlias) (rs string, err string)
+
+func TestArrayProxy(e endpoint.Endpoint) TestArrayFunc {
+	return func(ctx context.Context, s []*TestStrucAlias) (rs string, err string) {
+		request := &pb.TestArrayRequest{S: s}
+		parameter := base.GrpcClientParameter{
+			Method:     "TestArray",
+			NewRlyFunc: func() interface{} { return &pb.TestArrayReply{} },
+			Srv:        "pb.Test",
+		}
+		ctx = context.WithValue(ctx, "parameter", parameter)
+		response, grpcErr := e(ctx, request)
+		if grpcErr != nil {
+			err = grpcErr.Error()
+			return
+		}
+		return response.(*pb.TestArrayReply).Rs, response.(*pb.TestArrayReply).Err
 	}
 }

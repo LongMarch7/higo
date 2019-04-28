@@ -32,10 +32,12 @@ func init() {
 	RootCmd.PersistentFlags().BoolP("force", "f", false, "Force overide existing files without asking.")
 	RootCmd.PersistentFlags().StringP("folder", "b", "", "If you want to specify the base folder of the project.")
 	RootCmd.PersistentFlags().StringP("parent", "p", "", "parent dir")
+	RootCmd.PersistentFlags().BoolP("middleware", "k", false, "If you want to has middleware")
 	viper.BindPFlag("gk_parent", RootCmd.PersistentFlags().Lookup("parent"))
 	viper.BindPFlag("gk_folder", RootCmd.PersistentFlags().Lookup("folder"))
 	viper.BindPFlag("gk_force", RootCmd.PersistentFlags().Lookup("force"))
 	viper.BindPFlag("gk_debug", RootCmd.PersistentFlags().Lookup("debug"))
+	viper.BindPFlag("gk_middleware", RootCmd.PersistentFlags().Lookup("middleware"))
 }
 
 func checkProtoc() bool {

@@ -3,6 +3,7 @@ package app
 import (
     "context"
     "github.com/LongMarch7/higo/middleware"
+    "github.com/LongMarch7/higo/middleware/zipkin"
     "github.com/go-kit/kit/log"
     "github.com/go-kit/kit/sd"
     "time"
@@ -20,6 +21,7 @@ type ServerOpt struct {
     advertiseAddress     string
     advertisePort        string
     logger               log.Logger
+    zOptions             []zipkin.ZOption
 }
 
 type SOption func(o *ServerOpt)
@@ -84,9 +86,15 @@ func SNetType(netType  string) SOption {
     }
 }
 
+func SzOptions(zOptions  []zipkin.ZOption) SOption {
+    return func(o *ServerOpt) {
+        o.zOptions = zOptions
+    }
+}
+
 type ClientOpt struct {
     consulAddr      string
-    prefix          string
+    serviceName     string
     factory         sd.Factory
     retryTime       time.Duration
     retryCount      int
@@ -95,7 +103,6 @@ type ClientOpt struct {
     middleware      *middleware.Middleware
     encodeFunc      grpc_transport.EncodeRequestFunc
     decodeFunc      grpc_transport.DecodeResponseFunc
-    zipkinName      string
 }
 type COption func(o *ClientOpt)
 
@@ -105,9 +112,9 @@ func CConsulAddr(consulAddr  string) COption {
     }
 }
 
-func CPrefix(prefix  string) COption {
+func CServiceName(serviceName  string) COption {
     return func(o *ClientOpt) {
-        o.prefix = prefix
+        o.serviceName = serviceName
     }
 }
 
@@ -156,11 +163,5 @@ func CEncodeFunc(encodeFunc grpc_transport.EncodeRequestFunc) COption {
 func CDecodeFunc(decodeFunc grpc_transport.DecodeResponseFunc) COption {
     return func(o *ClientOpt) {
         o.decodeFunc = decodeFunc
-    }
-}
-
-func CZipkinName(zipkinName string) COption {
-    return func(o *ClientOpt) {
-        o.zipkinName = zipkinName
     }
 }

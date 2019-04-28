@@ -62,7 +62,7 @@ func (s *Server)init(){
     ls, _ := net.Listen("tcp", s.opts.serverAddr+":"+strconv.Itoa(s.opts.serverPort))
     s.listenConnector = ls
 
-    zip := zipkin.NewZipkin()
+    zip := zipkin.NewZipkin(s.opts.zOptions...)
     s.zipkin = zip
     var opts []grpc.ServerOption
     if tracer := zip.GetTracer(); tracer != nil {

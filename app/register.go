@@ -47,9 +47,9 @@ func Register(config RegisterConfig) (registar sd.Registrar) {
         Name:    config.prefix,
         Address: config.service,
         Port:    config.port,
-        Tags:    []string{config.prefix,
-                            "server="+ config.advertiseAddress + ":" + config.advertisePort,
-                            "maxThreadCount=" + config.maxThreadCount},
+        Tags:    []string{"MicroServer", config.prefix,
+            "maxThreadCount=" + config.maxThreadCount,
+            "server="+ config.advertiseAddress + ":" + config.advertisePort},
         Checks:   check,
     }
     registar = consulsd.NewRegistrar(client, &asr,  config.logger)

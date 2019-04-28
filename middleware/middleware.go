@@ -55,7 +55,7 @@ func (m *Middleware)AddMiddleware(opts ...MOption) *Middleware{
 		zOptions := append([]zipkin.ZOption{},zipkin.MethodName(m.opts.methodName))
 		zOptions = append(zOptions, zipkin.Name(m.opts.prefix))
 		zOptions = append(zOptions, m.opts.zOptions...)
-		endpoint = zipkin.NewZipkin(zOptions...).Middleware()(endpoint)
+		endpoint = zipkin.NewZipkin().Middleware(zOptions...)(endpoint)
 
 		lOptions := append([]logger.LOption{}, logger.MethodName(m.opts.methodName))
 		lOptions = append(lOptions, m.opts.lOptions...)

@@ -1,28 +1,29 @@
 package generator
 
 import (
-	"fmt"
-	"path"
+    "fmt"
+    "path"
+	"strconv"
 	"strings"
 
-	"bytes"
+    "bytes"
 
-	"os/exec"
+    "os/exec"
 
-	"os"
+    "os"
 
-	"runtime"
+    "runtime"
 
-	"errors"
+    "errors"
 
-	"github.com/dave/jennifer/jen"
-	"github.com/emicklei/proto"
-	"github.com/emicklei/proto-contrib/pkg/protofmt"
-	"github.com/LongMarch7/higo/toolkit/kit-cli/fs"
-	"github.com/LongMarch7/higo/toolkit/kit-cli/parser"
-	"github.com/LongMarch7/higo/toolkit/kit-cli/utils"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
+    "github.com/LongMarch7/higo/toolkit/kit-cli/fs"
+    "github.com/LongMarch7/higo/toolkit/kit-cli/parser"
+    "github.com/LongMarch7/higo/toolkit/kit-cli/utils"
+    "github.com/dave/jennifer/jen"
+    "github.com/emicklei/proto"
+    "github.com/emicklei/proto-contrib/pkg/protofmt"
+    "github.com/sirupsen/logrus"
+    "github.com/spf13/viper"
 )
 
 // GenerateTransport implement Gen, is used to generate a service transport
@@ -106,6 +107,11 @@ func (g *GenerateTransport) Generate() (err error) {
 		}
 		gt := newGenerateGRPCTransport(g.name, g.serviceInterface, g.methods)
 		err = gt.Generate()
+		if err != nil {
+			return err
+		}
+		hh := newGenerateHttpHandler(g.name, g.serviceInterface, g.methods)
+		err = hh.Generate()
 		if err != nil {
 			return err
 		}
@@ -1263,6 +1269,160 @@ func (g *generateGRPCTransport) Generate() (err error) {
 			)
 			g.code.NewLine()
 		}
+	}
+	if g.generateFirstTime {
+		return g.fs.WriteFile(g.filePath, g.srcFile.GoString(), true)
+	}
+	tmpSrc := g.srcFile.GoString()
+	src += "\n" + g.code.Raw().GoString()
+	f, err := parser.NewFileParser().Parse([]byte(tmpSrc))
+	if err != nil {
+		return err
+	}
+	// See if we need to add any new import
+	imp, err := g.getMissingImports(f.Imports, g.file)
+	if err != nil {
+		return err
+	}
+	if len(imp) > 0 {
+		src, err = g.AddImportsToFile(imp, src)
+		if err != nil {
+			return err
+		}
+	}
+	s, err := utils.GoImportsSource(g.destPath, src)
+	if err != nil {
+		return err
+	}
+	return g.fs.WriteFile(g.filePath, s, true)
+}
+
+type generateHttpHandler struct {
+	BaseGenerator
+	name              string
+	methods           []string
+	interfaceName     string
+	destPath          string
+	generateFirstTime bool
+	file              *parser.File
+	filePath          string
+	serviceInterface  parser.Interface
+}
+
+
+func newGenerateHttpHandler(name string, serviceInterface parser.Interface, methods []string) Gen {
+	t := &generateHttpHandler{
+		name:             name,
+		methods:          methods,
+		interfaceName:    utils.ToCamelCase(name + "Service"),
+		destPath:         fmt.Sprintf(viper.GetString("gk_grpc_path_format") , utils.GetParentDIr(), utils.ToLowerSnakeCase(name)),
+		serviceInterface: serviceInterface,
+	}
+	t.filePath = path.Join(t.destPath, viper.GetString("gk_http_handler_file_name"))
+	t.srcFile = jen.NewFilePath(t.destPath)
+	t.InitPg()
+	t.fs = fs.Get()
+	return t
+}
+func (g *generateHttpHandler) Generate() (err error) {
+	err = g.CreateFolderStructure(g.destPath)
+	if err != nil {
+		return err
+	}
+//	pbImport, err := utils.GetPbImportPath(g.name)
+	if err != nil {
+		return err
+	}
+	if b, err := g.fs.Exists(g.filePath); err != nil {
+		return err
+	} else if !b {
+		g.generateFirstTime = true
+		f := jen.NewFile("grpc")
+		g.fs.WriteFile(g.filePath, f.GoString(), false)
+	}
+	src, err := g.fs.ReadFile(g.filePath)
+	if err != nil {
+		return err
+	}
+	g.file, err = parser.NewFileParser().Parse([]byte(src))
+	if err != nil {
+		return err
+	}
+	for _, m := range g.serviceInterface.Methods {
+		funcFound := false
+		for _, v := range g.file.Methods {
+
+			if v.Name == ("Make" + m.Name + "Handler") {
+				funcFound = true
+			}
+		}
+
+		if !funcFound {
+            paramers := []jen.Code{
+                jen.Id("e").Qual("github.com/go-kit/kit/endpoint", "Endpoint"),
+            }
+
+			handlerBody := []jen.Code{
+				jen.Comment("TODO implement the business logic of " + m.Name),
+			}
+
+			funcParameters := []jen.Code{}
+			for _, par := range m.Parameters {
+				if strings.Contains(par.Type,"context.Context") {
+					handlerBody = append(handlerBody,jen.Id("baseContext").Op(":=").Qual("github.com/LongMarch7/higo/base","NewContext").Call(jen.Id("res"),jen.Id("req")))
+					handlerBody = append(handlerBody,jen.Id(par.Name).Op(":=").Id("baseContext").Dot("Request").Call().Dot("Context").Call())
+				}else if strings.Contains(par.Type,"[]*"){
+					handlerBody = append(handlerBody,jen.Id(par.Name).Op(":=").Make(jen.Id(par.Type),jen.Id("2")))
+				}else if strings.Contains(par.Type,"*"){
+					typeStr := strings.Replace(par.Type,"*","",-1)
+					handlerBody = append(handlerBody,jen.Id(par.Name).Op(":=").New(jen.Id(typeStr)))
+				}else {
+					handlerBody = append(handlerBody,jen.Var().Id(par.Name).Id(par.Type))
+				}
+				funcParameters = append(funcParameters,jen.Id(par.Name))
+			}
+
+			for index, result := range m.Results {
+				handlerBody = append(handlerBody,jen.Comment("RESULT" + strconv.Itoa(index) + ":" + result.Name + " " + result.Type))
+			}
+			handlerBody = append(handlerBody, jen.Id("clientProxy").Call(funcParameters...))
+            if viper.GetBool("gk_middleware") {
+                paramers = append(paramers, jen.Id("f").Func().Params([]jen.Code{
+                    jen.Qual("net/http","ResponseWriter"),
+                    jen.Id("*").Qual("net/http","Request")}...))
+				handlerBody = append(handlerBody,jen.Id("f").Call(jen.Id("res"),jen.Id("req")))
+            }
+
+            pt := NewPartialGenerator(nil)
+            pt.appendFunction(
+                "",
+                nil,
+                []jen.Code{
+                    jen.Id("res").Qual("net/http","ResponseWriter"),
+                    jen.Id("req").Id("*").Qual("net/http","Request"),
+                },
+                nil,
+                "",
+                handlerBody...,
+            )
+            body := []jen.Code{
+                jen.Id("clientProxy").Op(":=").Id(m.Name + "Proxy").Call(jen.Id("e")),
+                jen.Return(pt.Raw()),
+            }
+            g.code.appendFunction(
+                "Make" + m.Name + "Handler",
+                nil,
+                paramers,
+                []jen.Code{
+                    jen.Func().Params([]jen.Code{
+                        jen.Qual("net/http","ResponseWriter"),
+                        jen.Id("*").Qual("net/http","Request")}...),
+                },
+                "",
+                body...,
+            )
+            g.code.NewLine()
+        }
 	}
 	if g.generateFirstTime {
 		return g.fs.WriteFile(g.filePath, g.srcFile.GoString(), true)

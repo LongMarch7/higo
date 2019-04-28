@@ -74,8 +74,9 @@ func setDefaults() {
 	viper.SetDefault("gk_http_client_file_name", "http.go")
 	viper.SetDefault("gk_grpc_client_file_name", "grpc.go")
 	viper.SetDefault("gk_grpc_pb_file_name", "%s.proto")
-	viper.SetDefault("gk_grpc_base_file_name", "handler_gen.go")
-	viper.SetDefault("gk_grpc_file_name", "handler.go")
+	viper.SetDefault("gk_grpc_base_file_name", "grpc_handler_gen.go")
+	viper.SetDefault("gk_grpc_file_name", "grpc_handler.go")
+	viper.SetDefault("gk_http_handler_file_name", "http_handler.go")
 	if runtime.GOOS == "windows" {
 		viper.SetDefault("gk_grpc_compile_file_name", "compile.bat")
 	} else {

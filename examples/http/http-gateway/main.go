@@ -1,14 +1,16 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"github.com/LongMarch7/higo/app"
 	"github.com/LongMarch7/higo/middleware"
+	"github.com/LongMarch7/higo/router"
 	"github.com/LongMarch7/higo/service/examples/test"
 	"github.com/LongMarch7/higo/util/log"
 	"google.golang.org/grpc/grpclog"
+	"net/http"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 )
@@ -45,10 +47,22 @@ func main() {
 	)
 	serviceName := "SettingServer"
 	client.AddEndpoint(app.CMiddleware(mw),app.CServiceName(serviceName))
-	for {
-		rs, err := test.SayHelloProxy(client.GetClientEndpoint(serviceName))(context.Background(),&test.TestStrucAlias{Test1: "jack"})
-		grpclog.Info("[rs]=",rs," [err]=",err," [len(err)]",len(err))
-		time.Sleep(time.Second)
-	}
+	//for {
+	//	rs, err := test.SayHelloProxy(client.GetClientEndpoint(serviceName))(context.Background(),&test.TestStrucAlias{Test1: "jack"})
+	//	grpclog.Info("[rs]=",rs," [err]=",err," [len(err)]",len(err))
+	//	time.Sleep(time.Second)
+	//}
+	r := router.NewRouter()
+	r.Add([]router.Routs{
+		{"post|get","/test/{serviceName}",test.MakeSayHelloHandler(client.GetClientEndpoint(serviceName))},
+	})
+	// A route with a route variable:
+	//r.HandleFunc("/test/{serviceName}", test.MakeSayHelloHandler(client.GetClientEndpoint(serviceName)))
+	c = make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+	wg.Add(1)
+	go http.ListenAndServe("localhost:8080", r)
+	go Producer()
+	wg.Wait()
 }
 

@@ -7,18 +7,18 @@ import (
     "github.com/LongMarch7/higo/middleware"
     "github.com/LongMarch7/higo/middleware/zipkin"
     "github.com/LongMarch7/higo/service/base"
+    local_transport "github.com/LongMarch7/higo/tansport"
     "github.com/LongMarch7/higo/tansport/pool"
     "github.com/LongMarch7/higo/util/sd/consul"
     "github.com/go-kit/kit/endpoint"
     "github.com/go-kit/kit/sd"
     "github.com/go-kit/kit/sd/lb"
+    grpc_transport "github.com/go-kit/kit/transport/grpc"
     "github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
     "github.com/hashicorp/consul/api"
     "google.golang.org/grpc"
-    grpc_transport "github.com/go-kit/kit/transport/grpc"
     "io"
     "time"
-    local_transport "github.com/LongMarch7/higo/tansport"
 )
 
 type serviceList struct{
@@ -35,7 +35,7 @@ type Client struct {
 func defaultClientConfig() ClientOpt{
     return ClientOpt{
         consulAddr: "http://localhost:8500",
-        prefix: "bookServer",
+        serviceName: "defaultServer",
         retryTime: time.Second * 3,
         retryCount: 3,
         factory: nil,
@@ -62,15 +62,7 @@ func NewClient(opts ...COption) *Client{
 }
 
 func (c *Client)init(){
-    zip := zipkin.NewZipkin(zipkin.Name(c.opts.zipkinName))
-    c.zipkin = zip
-    dialOpts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}
-    if tracer := zip.GetTracer(); tracer != nil {
-        dialOpts = append(dialOpts,grpc.WithUnaryInterceptor(
-            otgrpc.OpenTracingClientInterceptor(tracer, otgrpc.LogPayloads()),
-        ))
-    }
-    c.dialOpts = dialOpts
+
 }
 
 func (c *Client)makeDefaultFactory() sd.Factory{
@@ -120,8 +112,8 @@ func (c *Client)AddEndpoint(opts ...COption){
     }
 
     //创建实例管理器, 此管理器会Watch监听etc中prefix的目录变化更新缓存的服务实例数据
-    consulTag := []string{c.opts.prefix}
-    instancer := consul.NewInstancer(client, c.opts.logger, c.opts.prefix, consulTag, c.opts.passingOnly, pool.Update)//pool.Update
+    consulTag := []string{"MicroServer",c.opts.serviceName}
+    instancer := consul.NewInstancer(client, c.opts.logger, c.opts.serviceName, consulTag, c.opts.passingOnly, pool.Update)//pool.Update
 
     //创建端点管理器， 此管理器根据Factory和监听的到实例创建endPoint并订阅instancer的变化动态更新Factory创建的endPoint
     if c.opts.factory == nil{
@@ -137,7 +129,18 @@ func (c *Client)AddEndpoint(opts ...COption){
     if( c.opts.middleware != nil ){
         reqEndPoint = c.opts.middleware.AddMiddleware(middleware.Endpoint(reqEndPoint)).Endpoint()
     }
-    c.serviceList[c.opts.prefix] = serviceList{
+
+    zip := zipkin.NewZipkin()
+    c.zipkin = zip
+    dialOpts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}
+    if tracer := zip.GetTracer(); tracer != nil {
+        dialOpts = append(dialOpts,grpc.WithUnaryInterceptor(
+            otgrpc.OpenTracingClientInterceptor(tracer, otgrpc.LogPayloads()),
+        ))
+    }
+    c.dialOpts = dialOpts
+
+    c.serviceList[c.opts.serviceName] = serviceList{
         endpoint: reqEndPoint,
         defaultEndpointer: endpointer,
     }

@@ -183,6 +183,9 @@ func (fp *FileParser) parseFieldListAsNamedTypes(list *ast.FieldList) []NamedTyp
 	if list != nil {
 		for i, p := range list.List {
 			typ := fp.getTypeFromExp(p.Type)
+			if len(typ) == 0 {
+				continue
+			}
 			logrus.Debug(fmt.Sprintf("Type %s", typ))
 
 			// Potentially N names
@@ -233,6 +236,8 @@ func (fp *FileParser) getTypeFromExp(e ast.Expr) string {
 	case *ast.Ellipsis:
 		t := fp.getTypeFromExp(k.Elt)
 		tp = "..." + t
+	case *ast.FuncType:
+		return "func"
 	default:
 		logrus.Info("Type Expresion not supported")
 		return ""
