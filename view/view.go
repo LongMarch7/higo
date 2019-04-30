@@ -17,16 +17,17 @@ type View interface {
 }
 
 // SimpleView implements View interface, but based on golang templates.
-type SimpleView struct {
+type ViewStruct struct {
     viewDir string
     tmpl    *template.Template
 }
 
 var onceAction sync.Once
 var Template View
+var dir = "E://go_project/higo/src/github.com/LongMarch7/higo/template"
 func init(){
     onceAction.Do(func() {
-        template, err := NewSimpleView("template")
+        template, err := NewView(dir)
         if err != nil{
             panic(err)
         }
@@ -34,7 +35,7 @@ func init(){
     })
 }
 //NewSimpleView returns a SimpleView with templates loaded from viewDir
-func NewSimpleView(viewDir string) (View, error) {
+func NewView(viewDir string) (View, error) {
     info, err := os.Stat(viewDir)
     if err != nil {
         return nil, err
@@ -42,10 +43,11 @@ func NewSimpleView(viewDir string) (View, error) {
     if !info.IsDir() {
         return nil, fmt.Errorf("utron: %s is not a directory", viewDir)
     }
-    s := &SimpleView{
+    s := &ViewStruct{
         viewDir: viewDir,
         tmpl:    template.New(filepath.Base(viewDir)),
     }
+    s.tmpl.Delims("{<",">}")
     return s.load(viewDir)
 }
 
@@ -54,7 +56,7 @@ func NewSimpleView(viewDir string) (View, error) {
 // Only files with extension .html, .tpl, .tmpl will be loaded. references to these templates
 // should be relative to the dir. That is, if  dir is foo, you don't have to refer to
 // foo/bar.tpl, instead just use bar.tpl
-func (s *SimpleView) load(dir string) (View, error) {
+func (s *ViewStruct) load(dir string) (View, error) {
 
     // supported is the list of file extensions that will be parsed as templates
     supported := map[string]bool{".tpl": true, ".html": true, ".tmpl": true}
@@ -107,7 +109,7 @@ func (s *SimpleView) load(dir string) (View, error) {
 }
 
 // Render executes template named name, passing data as context, the output is written to out.
-func (s *SimpleView) Render(out io.Writer, name string, data interface{}) error {
+func (s *ViewStruct) Render(out io.Writer, name string, data interface{}) error {
     return s.tmpl.ExecuteTemplate(out, name, data)
 }
 

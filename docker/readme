@@ -14,8 +14,10 @@
  docker run -d -p 11211:11211  memcached
 
  #mariadb -v "$PWD/data/mariadb:/var/lib/mysql"
- docker run -d -e MYSQL_ROOT_PASSWORD=123456  -p 13306:3306 mariadb:10.0.33
-
+ #docker run -it -e MYSQL_ROOT_PASSWORD=123456  -p 13306:3306 -v E:\\go_project\\higo\\db:/var/lib/mysql  mariadb
+ #docker-compose -f src/github.com/LongMarch7/higo/docker/docker-compose-mariadb.yml up -d
+ cd src/github.com/LongMarch7/higo/docker
+ docker-compose -f docker-compose-mariadb.yml up -d
 
  #close all
  docker stop $(docker ps -a -q)

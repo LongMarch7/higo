@@ -18,6 +18,7 @@ func MakeSayHelloHandler(e endpoint.Endpoint) func(http.ResponseWriter, *http.Re
 		// RESULT0:rs string
 		// RESULT1:err string
 		vars := mux.Vars(req)
+
 		s.Test1 = vars["serviceName"]
 		rs, err := clientProxy(ctx, s)
 		var ret = map[string]string{"serviceName":rs,"error":err}

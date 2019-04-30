@@ -53,6 +53,7 @@ func main() {
 	//	time.Sleep(time.Second)
 	//}
 	r := router.NewRouter()
+
 	r.Add([]router.Routs{
 		{"post|get","/test/{serviceName}",test.MakeSayHelloHandler(client.GetClientEndpoint(serviceName))},
 	})

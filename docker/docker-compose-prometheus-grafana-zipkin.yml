@@ -14,7 +14,7 @@ services:
     environment:
     - GF_SECURITY_ADMIN_PASSWORD=password
     volumes:
-    - $PWD/data/grafana_db:/var/lib/grafana grafana/grafana
+    - $PWD/data/grafana_db:/var/lib/grafana
   zipkin:
     image:  openzipkin/zipkin
     ports:

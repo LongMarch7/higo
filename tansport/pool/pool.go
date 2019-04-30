@@ -25,7 +25,7 @@ var poolManager = make( map[string] *Pool, 128 )
 
 type UpdatePool func(string, []string, uint32)
 
-var InvalidateTimeout = time.Minute
+var InvalidateTimeout = time.Second*10
 var lock sync.Mutex
 var timer *time.Timer
 
@@ -39,7 +39,7 @@ func Init(){
                 if time.Now().After(value.InvalidateDeadline){
                     for value.Queue.Quantity() != 0 {
                         val, ok, _ := value.Queue.Get()
-                        if !ok {
+                        if ok {
                             val.(*ConnectManager).Conn.Close()
                             val.(*ConnectManager).Conn = nil
                             val = nil
@@ -78,7 +78,7 @@ func Update( prefix string, instances []string, count uint32){
                 }
                 poolManager[v] = pool
             }
-            poolManager[v].InvalidateDeadline = time.Now().Add(InvalidateTimeout*2)
+            poolManager[v].InvalidateDeadline = time.Now().Add(InvalidateTimeout + time.Second*3)
             grpclog.Info( "[prefix]=", prefix,",[instance]=",v)
         }
         timer.Reset(InvalidateTimeout)
