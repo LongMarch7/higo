@@ -14,6 +14,7 @@ import (
 // View is an interface for rendering templates.
 type View interface {
     Render(out io.Writer, name string, data interface{}) error
+    Delims(left, right string)
 }
 
 // SimpleView implements View interface, but based on golang templates.
@@ -113,3 +114,6 @@ func (s *ViewStruct) Render(out io.Writer, name string, data interface{}) error 
     return s.tmpl.ExecuteTemplate(out, name, data)
 }
 
+func (s *ViewStruct) Delims(left, right string){
+    s.tmpl.Delims(left,right)
+}
