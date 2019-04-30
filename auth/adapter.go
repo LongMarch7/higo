@@ -233,6 +233,24 @@ func (a *Adapter) SavePolicy(model model.Model) error {
     return nil
 }
 
+func (a *Adapter) DeleteFromDb(rule []string) error {
+    line := savePolicyLine(rule[0], rule[1:])
+    err := a.db.Delete(&line).Error
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+func (a *Adapter) InsertIntoDb(rule []string) error {
+    line := savePolicyLine(rule[0], rule[1:])
+    err := a.db.Create(&line).Error
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
 // AddPolicy adds a policy rule to the storage.
 func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
     line := savePolicyLine(ptype, rule)
