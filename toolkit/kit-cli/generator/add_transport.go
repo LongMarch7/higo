@@ -993,6 +993,8 @@ func (g *generateGRPCTransportBase) Generate() (err error) {
 	if err != nil {
 		return err
 	}
+	pbImport = utils.GetPWD() + "/" + pbImport
+	pbImport = strings.Replace(pbImport,"./","",-1)
 	g.code.appendMultilineComment([]string{
 		"NewGRPCServer makes a set of endpoints available as a gRPC AddServer",
 	})
@@ -1114,6 +1116,8 @@ func (g *generateGRPCTransport) Generate() (err error) {
 	if err != nil {
 		return err
 	}
+    pbImport = utils.GetPWD() + "/" + pbImport
+	pbImport = strings.Replace(pbImport,"./","",-1)
 	if b, err := g.fs.Exists(g.filePath); err != nil {
 		return err
 	} else if !b {

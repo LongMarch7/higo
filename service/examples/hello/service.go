@@ -19,7 +19,8 @@ func (b *basicHelloService) HelloWorld(ctx context.Context, s string) (rs string
 	out := &bytes.Buffer{}
 	data := make(map[string]interface{})
 	data["name"] = s
-	view.Template.Render(out,"examples/hello", data)
+	//view.Template.Render(out,"examples/hello", data)
+	view.Template.Render(out,"index", data)
 	return out.String(), ""
 }
 

@@ -24,77 +24,68 @@ CREATE TABLE IF NOT EXISTS `micro_admin_menu` (
 -- 转存表中的数据 `micro_admin_menu`
 --
 INSERT INTO `micro_admin_menu` (`id`, `parent_id`, `type`, `status`, `list_order`, `router`, `method`, `param`, `name`, `icon`, `remark`) VALUES
-(1,     0,  0, 1, 0,      'admin/setting/SettingIndex',     'GET',    '', '设置',              'cogs', '系统设置入口'),
-(100,   1,  1, 1, 10,     'admin/setting/MailIndex',        'GET',    '', '邮箱配置',             '', '邮箱配置'),
+(1,     0,   0, 1, 0,     'admin/setting/SettingIndex',     'GET',    '', '设置',              'cogs', '系统设置入口'),
+(100,   1,   1, 1, 100,   'admin/setting/MailIndex',        'GET',    '', '邮箱配置',             '', '邮箱配置'),
 (10000, 100, 2, 0, 10000, 'admin/setting/MailConfPOST',     'POST',   '', '邮箱配置提交保存',      '', '邮箱配置提交保存'),
 (10001, 100, 1, 0, 10000, 'admin/setting/MailTemplate',     'GET',    '', '邮件模板',             '', '邮件模板'),
 (10002, 100, 0, 0, 10000, 'admin/setting/MailTemplatePOST', 'POST',   '', '邮件模板提交',          '', '邮件模板提交'),
-(10003, 100, 1, 0, 10000, 'admin/setting/MailTest',         'POST',   '', '邮件发送测试',          '', '邮件发送测试'),
-(101,   1,  0, 1, 50,     'admin/setting/LinkIndex',        'GET',    '', '友情链接',             '', '友情链接管理'),
+(10003, 100, 1, 0, 10000, 'admin/setting/MailTest',         'GET',    '', '邮件测试',             '', '邮件发送测试'),
+(10004, 100, 1, 0, 10000, 'admin/setting/MailSendTest',     'POST',   '', '邮件发送测试',          '', '邮件发送测试'),
+(101,   1,   0, 1, 101,   'admin/setting/LinkIndex',        'GET',    '', '友情链接',             '', '友情链接管理'),
 (10100, 101, 1, 0, 10000, 'admin/setting/LinkAdd',          'GET',    '', '添加友情链接',         '', '添加友情链接'),
 (10101, 101, 2, 0, 10000, 'admin/setting/LinkAddPost',      'POST',   '', '添加友情链接提交保存',  '', '添加友情链接提交保存'),
 (10102, 101, 1, 0, 10000, 'admin/setting/LinkEdit',         'GET',    '', '编辑友情链接',         '', '编辑友情链接'),
 (10103, 101, 2, 0, 10000, 'admin/setting/LinkEditPost',     'POST',   '', '编辑友情链接提交保存',  '', '编辑友情链接提交保存'),
-(10104, 101, 2, 0, 10000, 'admin/setting/LinkDelete',       'DELETE', '', '删除友情链接',         '', '删除友情链接'),
+(10104, 101, 2, 0, 10000, 'admin/setting/LinkDelete',       'POST',   '', '删除友情链接',         '', '删除友情链接'),
 (10105, 101, 2, 0, 10000, 'admin/setting/LinkListOrder',    'POST',   '', '友情链接排序',         '', '友情链接排序'),
 (10106, 101, 2, 0, 10000, 'admin/setting/LinkToggle',       'POST',   '', '友情链接显示隐藏',      '', '友情链接显示隐藏'),
-(102,   1,  1, 1, 0,      'admin/setting/SiteIndex',        'GET',    '', '网站信息',             '', '网站信息'),
+(102,   1,   1, 1, 0,     'admin/setting/SiteIndex',        'GET',    '', '网站信息',             '', '网站信息'),
 (10200, 102, 2, 0, 10000, 'admin/setting/SitePost',         'POST',   '', '网站信息设置提交',      '', '网站信息设置提交'),
-(103,   1,  0, 1, 10000,  'admin/setting/ActionIndex',      'GET',    '', '用户操作管理',         '', '用户操作管理'),
-(10300, 103, 1, 0, 10000, 'admin/setting/ActionEdit',       'GET',    '', '编辑用户操作',         '', '编辑用户操作'),
-(10301, 103, 2, 0, 10000, 'admin/setting/ActionEditPost',   'POST',   '', '编辑用户操作提交',      '', '编辑用户操作提交'),
-(10302, 103, 1, 0, 10000, 'admin/setting/ActionSync',       'GET',    '', '同步用户操作',          '', '同步用户操作'),
-(104,   1,  1, 0, 10000,  'admin/setting/PasswordIndex',    'GET',    '', '密码修改',             '', '密码修改'),
-(10400, 104, 2, 0, 10000, 'admin/setting/PasswordPost',     'POST',   '', '密码修改提交',          '', '密码修改提交'),
-(105,   1,  1, 1, 10000,  'admin/setting/UploadIndex',      'GET',    '', '上传设置',             '', '上传设置'),
-(10500, 105, 2, 0, 10000, 'admin/setting/UploadPost',       'POST',   '', '上传设置提交',          '', '上传设置提交'),
-(106,   1,  1, 0, 10000,  'admin/setting/AssetIndex',       'GET',    '', '资源管理',             'file', '资源管理列表'),
-(10600, 106, 2, 0, 10000, 'admin/setting/AssetDel',         'DELETE', '', '删除文件',             '', '删除文件'),
+(103,   1,   1, 0, 10000, 'admin/setting/PasswordIndex',    'GET',    '', '密码修改',             '', '密码修改'),
+(10300, 103, 2, 0, 10000, 'admin/setting/PasswordPost',     'POST',   '', '密码修改提交',          '', '密码修改提交'),
+(104,   1,   1, 1, 10000, 'admin/setting/UploadIndex',      'GET',    '', '上传设置',             '', '上传设置'),
+(10400, 104, 2, 0, 10000, 'admin/setting/UploadPost',       'POST',   '', '上传设置提交',          '', '上传设置提交'),
+(105,   1,   1, 0, 10000, 'admin/setting/AssetIndex',       'GET',    '', '资源管理',             'file', '资源管理列表'),
+(10500, 105, 2, 0, 10000, 'admin/setting/AssetDel',         'POST',   '', '删除文件',             '', '删除文件'),
 
 
-(2,     0,  0, 1, 10,     'admin/user/Index',               'GET',    '', '用户管理', 'group', '用户管理'),
-(200,   2,  1, 1, 10000,  'admin/user/RoleIndex',           'GET',    '', '角色管理', '', '角色管理'),
+(2,     0,   0, 1, 10,    'admin/user/Index',               'GET',    '', '用户管理', 'group', '用户管理'),
+(200,   2,   1, 1, 10000, 'admin/user/RoleIndex',           'GET',    '', '角色管理', '', '角色管理'),
 (20000, 200, 1, 0, 10000, 'admin/user/RoleAdd',             'GET',    '', '添加角色', '', '添加角色'),
 (20001, 200, 2, 0, 10000, 'admin/user/RoleAddPost',         'POST',   '', '添加角色提交', '', '添加角色提交'),
 (20002, 200, 1, 0, 10000, 'admin/user/RoleEdit',            'GET',    '', '编辑角色', '', '编辑角色'),
 (20003, 200, 2, 0, 10000, 'admin/user/RoleEditPost',        'POST',   '', '编辑角色提交', '', '编辑角色提交'),
-(20004, 200, 2, 0, 10000, 'admin/user/RoleDelete',          'DELETE', '', '删除角色', '', '删除角色'),
+(20004, 200, 2, 0, 10000, 'admin/user/RoleDelete',          'POST',   '', '删除角色', '', '删除角色'),
 (20005, 200, 1, 0, 10000, 'admin/user/RoleAuthorize',       'GET',    '', '设置角色权限', '', '设置角色权限'),
 (20006, 200, 2, 0, 10000, 'admin/user/RoleAuthorizePost',   'POST',   '', '角色授权提交', '', '角色授权提交'),
-(201,   2,  1, 1, 10000,  'admin/user/SiteUser',            'GET',    '', '本站用户', '', '本站用户'),
+(201,   2,   1, 1, 10000, 'admin/user/SiteUser',            'GET',    '', '本站用户', '', '本站用户'),
 (20100, 201, 2, 0, 10000, 'admin/user/SiteUserBan',         'POST',   '', '本站用户拉黑', '', '本站用户拉黑'),
 (20101, 201, 2, 0, 10000, 'admin/user/SiteUserCancelBan',   'POST',   '', '本站用户启用', '', '本站用户启用'),
 
-(3,     0,  0, 1, 30,     'admin/portal/Incdex',            'GET',    '', '门户管理', 'th', '门户管理'),
-(300,   3,  1, 1, 10000,  'admin/portal/ArticleIndex',      'GET',    '', '文章管理', '', '文章列表'),
+(3,     0,   0, 1, 30,    'admin/portal/Incdex',            'GET',    '', '门户管理', 'th', '门户管理'),
+(300,   3,   1, 1, 10000, 'admin/portal/ArticleIndex',      'GET',    '', '文章管理', '', '文章列表'),
 (30000, 300, 1, 0, 10000, 'admin/portal/ArticleAdd',        'GET',    '', '添加文章', '', '添加文章'),
 (30001, 300, 2, 0, 10000, 'admin/portal/ArticleAddPost',    'POST',   '', '添加文章提交', '', '添加文章提交'),
 (30002, 300, 1, 0, 10000, 'admin/portal/ArticleEdit',       'GET',    '', '编辑文章', '', '编辑文章'),
 (30003, 300, 2, 0, 10000, 'admin/portal/ArticleEditPost',   'POST',   '', '编辑文章提交', '', '编辑文章提交'),
-(30004, 300, 2, 0, 10000, 'admin/portal/ArticleDelete',     'DELETE', '', '文章删除', '', '文章删除'),
+(30004, 300, 2, 0, 10000, 'admin/portal/ArticleDelete',     'POST',   '', '文章删除', '', '文章删除'),
 (30005, 300, 2, 0, 10000, 'admin/portal/ArticlePublish',    'POST',   '', '文章发布', '', '文章发布'),
 (30006, 300, 2, 0, 10000, 'admin/portal/ArticleTop',        'POST',   '', '文章置顶', '', '文章置顶'),
 (30007, 300, 2, 0, 10000, 'admin/portal/ArticleRecommend',  'POST',   '', '文章推荐', '', '文章推荐'),
 (30008, 300, 2, 0, 10000, 'admin/portal/ArticleOrder',      'POST',   '', '文章排序', '', '文章排序'),
-(301,   3,  1, 1, 10000,  'admin/portal/CategoryIndex',     'GET',    '', '分类管理', '', '文章分类列表'),
+(301,   3,   1, 1, 10000, 'admin/portal/CategoryIndex',     'GET',    '', '分类管理', '', '文章分类列表'),
 (30100, 301, 1, 0, 10000, 'admin/portal/CategoryAdd',       'GET',    '', '添加文章分类', '', '添加文章分类'),
 (30101, 301, 2, 0, 10000, 'admin/portal/CategoryAddPost',   'POST',   '', '添加文章分类提交', '', '添加文章分类提交'),
 (30102, 301, 1, 0, 10000, 'admin/portal/CategoryEdit',      'GET',    '', '编辑文章分类', '', '编辑文章分类'),
 (30103, 301, 2, 0, 10000, 'admin/portal/CategoryEditPost',  'POST',   '', '编辑文章分类提交', '', '编辑文章分类提交'),
 (30104, 301, 1, 0, 10000, 'admin/portal/CategorySelect',    'GET',    '', '文章分类选择对话框', '', '文章分类选择对话框'),
 (30105, 301, 2, 0, 10000, 'admin/portal/CategoryOrder',     'POST',   '', '文章分类排序', '', '文章分类排序'),
-(30106, 301, 2, 0, 10000, 'admin/portal/CategoryDelete',    'DELETE', '', '删除文章分类', '', '删除文章分类'),
-(302,   3,  1, 1, 10000,  'admin/portal/PageIndex',         'GET',    '', '页面管理', '', '页面管理'),
-(30200, 302, 1, 0, 10000, 'admin/portal/PageAdd',           'GET',    '', '添加页面', '', '添加页面'),
-(30201, 302, 2, 0, 10000, 'admin/portal/PageAddPost',       'POST',   '', '添加页面提交', '', '添加页面提交'),
-(30202, 302, 1, 0, 10000, 'admin/portal/PageEdit',          'GET',    '', '编辑页面', '', '编辑页面'),
-(30203, 302, 2, 0, 10000, 'admin/portal/PageEditPost',      'POST',   '', '编辑页面提交', '', '编辑页面提交'),
-(30204, 302, 2, 0, 10000, 'admin/portal/PageDelete',        'DELETE', '', '删除页面', '', '删除页面'),
-(303,   3,  1, 1, 10000,  'admin/portal/TagIndex',          'GET',    '', '文章标签', '', '文章标签'),
-(30300, 303, 1, 0, 10000, 'admin/portal/TagAdd',            'GET',    '', '添加文章标签', '', '添加文章标签'),
-(30301, 303, 2, 0, 10000, 'admin/portal/TagAddPost',        'POST',   '', '添加文章标签提交', '', '添加文章标签提交'),
-(30302, 303, 2, 0, 10000, 'admin/portal/TagUpStatus',       'POST',   '', '更新标签状态', '', '更新标签状态'),
-(30303, 303, 2, 0, 10000, 'admin/portal/TagDelete',         'DELETE', '', '删除文章标签', '', '删除文章标签');
+(30106, 301, 2, 0, 10000, 'admin/portal/CategoryDelete',    'POST',   '', '删除文章分类', '', '删除文章分类'),
+(302,   3,   1, 1, 10000, 'admin/portal/TagIndex',          'GET',    '', '文章标签', '', '文章标签'),
+(30200, 302, 1, 0, 10000, 'admin/portal/TagAdd',            'GET',    '', '添加文章标签', '', '添加文章标签'),
+(30201, 302, 2, 0, 10000, 'admin/portal/TagAddPost',        'POST',   '', '添加文章标签提交', '', '添加文章标签提交'),
+(30202, 302, 2, 0, 10000, 'admin/portal/TagUpStatus',       'POST',   '', '更新标签状态', '', '更新标签状态'),
+(30203, 302, 2, 0, 10000, 'admin/portal/TagDelete',         'POST',   '', '删除文章标签', '', '删除文章标签');
 
 
 -- --------------------------------------------------------
@@ -126,14 +117,14 @@ CREATE TABLE IF NOT EXISTS `micro_asset` (
 --
 
 CREATE TABLE IF NOT EXISTS `micro_casbin_rule` (
-`p_type` varchar(100) NOT NULL DEFAULT '' COMMENT '规则类型',
-`v0` varchar(100) COMMENT '规则0',
-`v1` varchar(100) COMMENT '规则1',
-`v2` varchar(100) COMMENT '规则2',
-`v3` varchar(100) COMMENT '规则3',
-`v4` varchar(100) COMMENT '规则4',
-`v5` varchar(100) COMMENT '规则4',
-UNIQUE KEY `rule_key` (`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`)
+  `p_type` varchar(100) NOT NULL DEFAULT '' COMMENT '规则类型',
+  `v0` varchar(100) COMMENT '规则0',
+  `v1` varchar(100) COMMENT '规则1',
+  `v2` varchar(100) COMMENT '规则2',
+  `v3` varchar(100) COMMENT '规则3',
+  `v4` varchar(100) COMMENT '规则4',
+  `v5` varchar(100) COMMENT '规则4',
+  UNIQUE KEY `rule_key` (`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='授权表';
 
 -- --------------------------------------------------------
@@ -149,7 +140,7 @@ CREATE TABLE IF NOT EXISTS `micro_comment` (
   `to_user_id` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '被评论的用户id',
   `object_id` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '评论内容 id',
   `like_count` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '点赞数',
-  `dislike_count` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '不喜欢数',
+  `dislike_count` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '吐槽数',
   `floor` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '楼层数',
   `create_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '评论时间',
   `delete_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '删除时间',
@@ -157,8 +148,6 @@ CREATE TABLE IF NOT EXISTS `micro_comment` (
   `type` tinyint(3) UNSIGNED NOT NULL DEFAULT '1' COMMENT '评论类型；1实名评论',
   `tab_name` varchar(64) NOT NULL DEFAULT '' COMMENT '评论内容所在表，不带表前缀',
   `full_name` varchar(50) NOT NULL DEFAULT '' COMMENT '评论者昵称',
-  `email` varchar(255) NOT NULL DEFAULT '' COMMENT '评论者邮箱',
-  `path` varchar(255) NOT NULL DEFAULT '' COMMENT '层级关系',
   `url` text COMMENT '原文地址',
   `content` text CHARACTER SET utf8mb4 COMMENT '评论内容',
   `more` text CHARACTER SET utf8mb4 COMMENT '扩展属性',
@@ -196,7 +185,7 @@ CREATE TABLE IF NOT EXISTS `micro_link` (
 --
 
 INSERT INTO `micro_link` (`id`, `status`, `rating`, `list_order`, `description`, `url`, `name`, `image`, `target`, `rel`) VALUES
-(1, 1, 1, 8, 'thinkcmf官网', 'http://www.baidu.com', 'baidu', '', '_blank', '');
+(1, 1, 1, 8, '百度', 'http://www.baidu.com', 'baidu', '', '_blank', '');
 
 -- --------------------------------------------------------
 
@@ -285,7 +274,7 @@ CREATE TABLE IF NOT EXISTS `micro_portal_post` (
 --
 
 CREATE TABLE IF NOT EXISTS `micro_portal_tag` (
-  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '分类id',
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '标签id',
   `status` tinyint(3) UNSIGNED NOT NULL DEFAULT '1' COMMENT '状态,1:发布,0:不发布',
   `recommended` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否推荐;1:推荐;0:不推荐',
   `post_count` bigint(20) UNSIGNED NOT NULL DEFAULT '0' COMMENT '标签文章数',
@@ -375,21 +364,22 @@ CREATE TABLE IF NOT EXISTS `micro_role_user` (
 
 CREATE TABLE IF NOT EXISTS `micro_user` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `bind_id` bigint(20) UNSIGNED NOT NULL  COMMENT 'bind user id',
+  `bind_id` bigint(20) UNSIGNED NOT NULL  COMMENT '绑定第三方账号ID',
   `user_type` tinyint(3) UNSIGNED NOT NULL DEFAULT '2' COMMENT '用户类型;1:admin;2:大v;3:广告商',
   `sex` tinyint(2) NOT NULL DEFAULT '0' COMMENT '性别;0:保密,1:男,2:女',
   `birthday` int(11) NOT NULL DEFAULT '0' COMMENT '生日',
   `last_login_time` int(11) NOT NULL DEFAULT '0' COMMENT '最后登录时间',
-  `score` int(11) NOT NULL DEFAULT '0' COMMENT '用户积分',
+  `score` int(11) NOT NULL DEFAULT '0' COMMENT '用户等级',
   `coin` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '金币',
   `balance` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '余额',
   `create_time` int(11) NOT NULL DEFAULT '0' COMMENT '注册时间',
-  `user_status` tinyint(3) UNSIGNED NOT NULL DEFAULT '1' COMMENT '用户状态;0:禁用,1:正常,2:未验证',
+  `user_status` tinyint(3) UNSIGNED NOT NULL DEFAULT '1' COMMENT '用户状态;0:禁用,1:正常,2:冻结,3：未验证',
   `user_login` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '用户名',
   `user_pass` varchar(64) NOT NULL DEFAULT '' COMMENT '登录密码;micro_password加密',
+  `pay_pass` varchar(64) NOT NULL DEFAULT '' COMMENT '支付密码;micro_password加密',
+  `freeze_time` int(11) NOT NULL DEFAULT '0' COMMENT '冻结时间',
   `user_nickname` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '用户昵称',
   `user_email` varchar(100) NOT NULL DEFAULT '' COMMENT '用户登录邮箱',
-  `user_url` varchar(100) NOT NULL DEFAULT '' COMMENT '用户个人网址',
   `avatar` varchar(255) NOT NULL DEFAULT '' COMMENT '用户头像',
   `signature` varchar(255) NOT NULL DEFAULT '' COMMENT '个性签名',
   `last_login_ip` varchar(15) NOT NULL DEFAULT '' COMMENT '最后登录ip',
@@ -397,8 +387,7 @@ CREATE TABLE IF NOT EXISTS `micro_user` (
   `mobile` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '中国手机不带国家代码，国际手机号格式为：国家代码-手机号',
   `more` text COMMENT '扩展属性',
   PRIMARY KEY (`id`),
-  KEY `user_login` (`user_login`),
-  KEY `user_nickname` (`user_nickname`)
+  KEY `user_login` (`user_login`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
 
@@ -414,7 +403,7 @@ CREATE TABLE IF NOT EXISTS `micro_bind_user` (
   `region_id` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '用户地域',
   `class_id` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '用户分类',
   `bind_status` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '绑定状态;0:未绑定,1: 审核中,2:已绑定',
-  `pass_time` int(11) NOT NULL DEFAULT '0' COMMENT '审核通过日期',
+  `pass_time` int(11) NOT NULL DEFAULT '0' COMMENT '自动审核通过日期',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='绑定账号表';
 
@@ -428,7 +417,8 @@ CREATE TABLE IF NOT EXISTS `micro_task_category` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '分类id',
   `parent_id` bigint(20) UNSIGNED NOT NULL DEFAULT '0' COMMENT '分类父id',
   `count` bigint(20) UNSIGNED NOT NULL DEFAULT '0' COMMENT '分类任务数',
-  `status` tinyint(3) UNSIGNED NOT NULL DEFAULT '1' COMMENT '状态,1:发布,0:不发布',
+  `valid_count` bigint(20) UNSIGNED NOT NULL DEFAULT '0' COMMENT '未完成任务数',
+  `status` tinyint(3) UNSIGNED NOT NULL DEFAULT '1' COMMENT '状态,2:删除,1:发布,0:不发布',
   `delete_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '删除时间',
   `list_order` float NOT NULL DEFAULT '10000' COMMENT '排序',
   `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '分类名称',
@@ -511,7 +501,7 @@ CREATE TABLE IF NOT EXISTS `micro_task_action_201904` (
 CREATE TABLE IF NOT EXISTS `micro_task_check_log_201904` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'id',
   `user_id` bigint(20) UNSIGNED NOT NULL DEFAULT '1' COMMENT '用户id',
-  `task_id` bigint(20) UNSIGNED NOT NULL DEFAULT '1' COMMENT '任务日志id',
+  `task_id` bigint(20) UNSIGNED NOT NULL DEFAULT '1' COMMENT '任务id',
   `reason_describe` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '原因描述',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='任务复审表';
@@ -528,12 +518,12 @@ CREATE TABLE IF NOT EXISTS `micro_user_action_log_201904` (
   `user_id` bigint(20) UNSIGNED NOT NULL DEFAULT '0' COMMENT '用户id',
   `count` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '访问次数',
   `last_visit_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '最后访问时间',
-  `object` varchar(100) NOT NULL DEFAULT '' COMMENT '访问对象的id,格式:不带前缀的表名+id;如posts1表示xx_posts表里id为1的记录',
-  `action` varchar(50) NOT NULL DEFAULT '' COMMENT '操作名称;格式:应用名+控制器+操作名,也可自己定义格式只要不发生冲突且惟一;',
+  `parameter` varchar(100) NOT NULL DEFAULT '' COMMENT '参数',
+  `action` varchar(50) NOT NULL DEFAULT '' COMMENT '操作名称;url',
   `ip` varchar(15) NOT NULL DEFAULT '' COMMENT '用户ip',
   PRIMARY KEY (`id`),
-  KEY `user_object_action` (`user_id`,`object`,`action`),
-  KEY `user_object_action_ip` (`user_id`,`object`,`action`,`ip`)
+  KEY `user_parameter_action` (`user_id`,`parameter`,`action`),
+  KEY `user_parameter_action_ip` (`user_id`,`parameter`,`action`,`ip`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='访问记录表';
 
 -- --------------------------------------------------------
@@ -565,10 +555,8 @@ CREATE TABLE IF NOT EXISTS `micro_user_favorite` (
   `user_id` bigint(20) UNSIGNED NOT NULL DEFAULT '0' COMMENT '用户 id',
   `title` varchar(100) NOT NULL DEFAULT '' COMMENT '收藏内容的标题',
   `thumbnail` VARCHAR(100) NOT NULL DEFAULT '' COMMENT '缩略图',
-  `url` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '收藏内容的原文地址，JSON格式',
+  `url` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '收藏内容的地址，JSON格式',
   `description` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '收藏内容的描述',
-  `tab_name` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '收藏实体以前所在表,不带前缀',
-  `object_id` int(10) UNSIGNED DEFAULT '0' COMMENT '收藏内容原来的主键id',
   `create_time` int(10) UNSIGNED DEFAULT '0' COMMENT '收藏时间',
   PRIMARY KEY (`id`),
   KEY `uid` (`user_id`)
@@ -582,11 +570,11 @@ CREATE TABLE IF NOT EXISTS `micro_user_favorite` (
 
 CREATE TABLE IF NOT EXISTS `micro_user_login_attempt` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) UNSIGNED NOT NULL DEFAULT '0' COMMENT '用户 id',
   `login_attempts` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '尝试次数',
   `attempt_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '尝试登录时间',
   `locked_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '锁定时间',
   `ip` varchar(15) NOT NULL DEFAULT '' COMMENT '用户 ip',
-  `account` varchar(100) NOT NULL DEFAULT '' COMMENT '用户账号,手机号,邮箱或用户名',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='用户登录尝试表' ROW_FORMAT=COMPACT;
 
@@ -604,23 +592,8 @@ CREATE TABLE IF NOT EXISTS `micro_user_score_log_201904` (
   `score` int(11) NOT NULL DEFAULT '0' COMMENT '更改积分，可以为负',
   `coin` int(11) NOT NULL DEFAULT '0' COMMENT '更改金币，可以为负',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='用户操作积分等奖励日志表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='用户操作奖励日志表';
 
--- --------------------------------------------------------
-
---
--- 表的结构 `micro_user_token`
---
-
-CREATE TABLE IF NOT EXISTS `micro_user_token` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL DEFAULT '0' COMMENT '用户id',
-  `expire_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '过期时间',
-  `create_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '创建时间',
-  `token` varchar(64) NOT NULL DEFAULT '' COMMENT 'token',
-  `device_type` varchar(10) NOT NULL DEFAULT '' COMMENT '设备类型;mobile,android,iphone,ipad,web,pc,mac,wxapp',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='用户客户端登录 token 表';
 
 -- --------------------------------------------------------
 
@@ -649,8 +622,7 @@ CREATE TABLE IF NOT EXISTS `micro_user_like_201904` (
   `user_id` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT '用户 id',
   `object_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '内容原来的主键id',
   `create_time` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '创建时间',
-  `tab_name` varchar(64) NOT NULL DEFAULT '' COMMENT '内容以前所在表,不带前缀',
-  `url` varchar(255) NOT NULL DEFAULT '' COMMENT '内容的原文地址，不带域名',
+  `url` varchar(255) NOT NULL DEFAULT '' COMMENT '内容的地址',
   `title` varchar(100) NOT NULL DEFAULT '' COMMENT '内容的标题',
   `thumbnail` varchar(100) NOT NULL DEFAULT '' COMMENT '缩略图',
   `description` text COMMENT '内容的描述',

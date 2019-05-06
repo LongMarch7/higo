@@ -47,18 +47,14 @@ func main() {
 	)
 	serviceName := "SettingServer"
 	client.AddEndpoint(app.CMiddleware(mw),app.CServiceName(serviceName))
-	//for {
-	//	rs, err := test.SayHelloProxy(client.GetClientEndpoint(serviceName))(context.Background(),&test.TestStrucAlias{Test1: "jack"})
-	//	grpclog.Info("[rs]=",rs," [err]=",err," [len(err)]",len(err))
-	//	time.Sleep(time.Second)
-	//}
+
 	r := router.NewRouter()
 
+	r.Cli = client
 	r.Add([]router.Routs{
 		{"post|get","/test/{serviceName}",hello.MakeHelloWorldHandler(client.GetClientEndpoint(serviceName))},
 	})
-	// A route with a route variable:
-	//r.HandleFunc("/test/{serviceName}", test.MakeSayHelloHandler(client.GetClientEndpoint(serviceName)))
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/",http.FileServer(http.Dir("E://go_project/higo/src/github.com/LongMarch7/higo/static"))))
 	c = make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
 	wg.Add(1)

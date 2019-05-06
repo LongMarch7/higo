@@ -525,7 +525,9 @@ func newGenerateServiceEndpoints(name string, imports []parser.NamedTypeValue,
 		serviceInterface: serviceInterface,
 		serviceImports:   imports,
 	}
-	gsm.pbPath = strings.Replace(gsm.pbPath,"//","/",-1)
+	pbImport := strings.Replace(gsm.pbPath,"//","/",-1)
+	pbImport = utils.GetPWD() + "/" + pbImport
+	gsm.pbPath = strings.Replace(pbImport,"./","",-1)
 	gsm.filePath = path.Join(gsm.destPath, viper.GetString("gk_endpoint_file_name"))
 	gsm.generateDefaults = generateDefaults
 	gsm.srcFile = jen.NewFilePath(gsm.destPath)
@@ -590,6 +592,7 @@ func (g *generateServiceEndpoints) Generate() error {
 
 func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 	var stp string
+
 	methodParameterNames := []parser.NamedTypeValue{}
 	for _, v := range g.serviceInterface.Methods {
 		methodParameterNames = append(methodParameterNames, v.Parameters...)

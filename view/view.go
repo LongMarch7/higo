@@ -25,10 +25,10 @@ type ViewStruct struct {
 
 var onceAction sync.Once
 var Template View
-var dir = "E://go_project/higo/src/github.com/LongMarch7/higo/template"
+var Dir = "E://go_project/higo/src/github.com/LongMarch7/higo/template"
 func init(){
     onceAction.Do(func() {
-        template, err := NewView(dir)
+        template, err := NewView(Dir)
         if err != nil{
             panic(err)
         }
@@ -48,7 +48,7 @@ func NewView(viewDir string) (View, error) {
         viewDir: viewDir,
         tmpl:    template.New(filepath.Base(viewDir)),
     }
-    s.tmpl.Delims("{<",">}")
+    //s.tmpl.Delims("{<",">}")
     return s.load(viewDir)
 }
 

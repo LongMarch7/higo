@@ -1,6 +1,7 @@
 package router
 
 import (
+    "github.com/LongMarch7/higo/app"
     "github.com/gorilla/mux"
     "google.golang.org/grpc/grpclog"
     "net/http"
@@ -16,7 +17,8 @@ type Routs struct{
 
 type Router struct {
     *mux.Router
-    routes []Routs
+    routes  []Routs
+    Cli     *app.Client
 }
 
 var supported = "GET POST PUT PATCH TRACE PATCH DELETE HEAD OPTIONS"

@@ -53,10 +53,22 @@ func GoImportsSource(path string, s string) (string, error) {
 	return string(is), err
 }
 
+func GetPWD() string{
+	pwd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	pwd = strings.Replace(pwd,"\\", "/",-1)
+	pwd = strings.Split(pwd,"src/")[1]
+	return pwd
+}
+
 func GetParentDIr() string{
 	sub := ""
 	if viper.GetString("gk_parent") != "" {
-		sub = "/" + viper.GetString("gk_parent")
+		sub = viper.GetString("gk_parent")
+	}else{
+		sub = "."
 	}
 	return sub
 }

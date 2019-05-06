@@ -1,4 +1,4 @@
-cd src
+cd src/github.com/LongMarch7/higo/service
 [new server]
 kit-cli n s admin
 kit-cli n s setting -p admin    //create a setting service in admin parent service

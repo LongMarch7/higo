@@ -6,7 +6,7 @@ import (
 )
 type Casbin struct {
     opts     authOpt
-    cas      *casbin.Enforcer
+    enforcer *casbin.Enforcer
     adapter  *Adapter
 }
 
@@ -45,32 +45,12 @@ func NewCasbin(opts ...AOption) *Casbin {
     cas := &Casbin{
         opts: opt,
         adapter: a,
-        cas: casbin.NewEnforcer(m, a),
+        enforcer: casbin.NewEnforcer(m, a),
     }
+    cas.enforcer.LoadPolicy()
     return cas
 }
 
-func (c* Casbin)AddPolicy(params []string) bool{
-    c.adapter.InsertIntoDb(params)
-    return c.cas.AddPolicy(params)
-}
-
-
-func (c* Casbin)RemovePolicy(params []string) bool{
-    c.adapter.DeleteFromDb(params)
-    return c.cas.RemovePolicy(params)
-}
-
-func (c* Casbin)AddRoleForUser(user string, role string) bool{
-    c.adapter.InsertIntoDb([]string{"g","user","role"})
-    return c.cas.AddRoleForUser(user, role)
-}
-
-func (c* Casbin)DeleteRoleForUser(user string, role string) bool{
-    c.adapter.DeleteFromDb([]string{"g","user","role"})
-    return c.cas.DeleteRoleForUser(user,role)
-}
-
 func (c* Casbin)Enforcer() *casbin.Enforcer{
-    return c.cas
+    return c.enforcer
 }
