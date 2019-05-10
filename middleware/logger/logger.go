@@ -42,9 +42,9 @@ func (h *Logger)Middleware(opts ...LOption) endpoint.Middleware{
 	}
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			defer func(begin time.Time) {
-				grpclog.Info(h.opts.methodName, "--", err, "--", time.Since(begin))
-			}(time.Now())
+			defer func() {
+				grpclog.Info("[" + h.opts.prefix + ":" + h.opts.methodName + "]", err, "--", time.Now())
+			}()
 			return next(ctx, request)
 
 		}

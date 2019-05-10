@@ -7,6 +7,7 @@ import (
     "github.com/LongMarch7/higo/middleware"
     "github.com/LongMarch7/higo/middleware/zipkin"
     "github.com/LongMarch7/higo/service/base"
+    base_context "github.com/LongMarch7/higo/base"
     local_transport "github.com/LongMarch7/higo/tansport"
     "github.com/LongMarch7/higo/tansport/pool"
     "github.com/LongMarch7/higo/util/sd/consul"
@@ -17,6 +18,8 @@ import (
     "github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
     "github.com/hashicorp/consul/api"
     "google.golang.org/grpc"
+    "google.golang.org/grpc/metadata"
+    "github.com/grpc-ecosystem/go-grpc-middleware"
     "io"
     "time"
 )
@@ -80,7 +83,11 @@ func (c *Client)makeDefaultFactory() sd.Factory{
             defer func() {
                 pool.PutConnectToPool(cManager, poolManage)
             }()
-            parameter := ctx.Value("parameter").(base.GrpcClientParameter)
+            par := ctx.Value("parameter")
+            if par == nil {
+                return nil,errors.New("parametes error")
+            }
+            parameter := par.(base.GrpcClientParameter)
             grpcEndpoint := grpc_transport.NewClient(
                 cManager.Conn,
                 parameter.Srv,
@@ -88,7 +95,9 @@ func (c *Client)makeDefaultFactory() sd.Factory{
                 c.opts.encodeFunc,
                 c.opts.decodeFunc,
                 parameter.NewRlyFunc(),
+                grpc_transport.ClientAfter(GrpcClientAfter),
             ).Endpoint()
+
             return grpcEndpoint(ctx,request)
         },nil,nil
     }
@@ -135,7 +144,10 @@ func (c *Client)AddEndpoint(opts ...COption){
     dialOpts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}
     if tracer := zip.GetTracer(); tracer != nil {
         dialOpts = append(dialOpts,grpc.WithUnaryInterceptor(
-            otgrpc.OpenTracingClientInterceptor(tracer, otgrpc.LogPayloads()),
+            grpc_middleware.ChainUnaryClient(
+                withReqData(),
+                otgrpc.OpenTracingClientInterceptor(tracer, otgrpc.LogPayloads()),
+            ),
         ))
     }
     c.dialOpts = dialOpts
@@ -152,7 +164,51 @@ func (c *Client)GetClientEndpoint(srv string) endpoint.Endpoint{
         return service.endpoint
     }
     return func(ctx context.Context, request interface{}) (response interface{}, err error){
-            c.opts.logger.Log(srv,"nothing done")
-            return nil, errors.New("[c] not found")
+        c.opts.logger.Log(srv,"nothing done")
+        return nil, errors.New("[c] not found")
     }
+}
+
+func withReqData() grpc.UnaryClientInterceptor{
+    return func(
+        ctx context.Context,
+        method string,
+        req, resp interface{},
+        cc *grpc.ClientConn,
+        invoker grpc.UnaryInvoker,
+        opts ...grpc.CallOption,
+    ) error {
+        baseCtx := ctx.Value(base_context.StrucName)
+        if baseCtx == nil {
+            return errors.New("get context error")
+        }
+        baseContext := baseCtx.(*base_context.BaseContext)
+        md, ok := metadata.FromOutgoingContext(ctx)
+        if !ok {
+            md = metadata.New(nil)
+        } else {
+            md = md.Copy()
+        }
+        reqParams := baseContext.Params
+        for key, value := range reqParams {
+            md[key] = []string{value}
+        }
+        ctxWithMetadata := metadata.NewOutgoingContext(ctx, md)
+        return invoker(ctxWithMetadata,method,req,resp,cc,opts...)
+    }
+}
+
+func GrpcClientAfter(ctx context.Context, header metadata.MD, trailer metadata.MD) context.Context{
+    baseCtx := ctx.Value(base_context.StrucName)
+    if baseCtx != nil {
+        baseContext := baseCtx.(*base_context.BaseContext)
+        if len(header) > 0{
+            baseContext.GrpcHeader = header
+        }
+        if len(trailer) > 0{
+            baseContext.GrpcTrailer = trailer
+        }
+    }
+
+    return ctx
 }

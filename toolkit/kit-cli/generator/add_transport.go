@@ -1364,6 +1364,7 @@ func (g *generateHttpHandler) Generate() (err error) {
 		if !funcFound {
             paramers := []jen.Code{
                 jen.Id("e").Qual("github.com/go-kit/kit/endpoint", "Endpoint"),
+                jen.Id("pattern").String(),
             }
 
 			handlerBody := []jen.Code{
@@ -1373,8 +1374,14 @@ func (g *generateHttpHandler) Generate() (err error) {
 			funcParameters := []jen.Code{}
 			for _, par := range m.Parameters {
 				if strings.Contains(par.Type,"context.Context") {
-					handlerBody = append(handlerBody,jen.Id("baseContext").Op(":=").Qual("github.com/LongMarch7/higo/base","NewContext").Call(jen.Id("res"),jen.Id("req")))
-					handlerBody = append(handlerBody,jen.Id(par.Name).Op(":=").Id("baseContext").Dot("Request").Call().Dot("Context").Call())
+					handlerBody = append(handlerBody,jen.Id(par.Name).Op(":=").Id("req").Dot("Context").Call())
+					//handlerBody = append(handlerBody,jen.Id("baseCtx").Op(":=").Id(par.Name).Dot("Value").Call(jen.Lit("baseContext")))
+					//handlerBody = append(handlerBody,jen.If(
+					//	jen.Id("baseCtx").Op("==").Nil().Block(
+					//		jen.Id("baseCtx").Op("=").Qual("github.com/LongMarch7/higo/base","NewContext").Call(jen.Id("res"),jen.Id("req")),
+					//	),
+					//))
+					//handlerBody = append(handlerBody, jen.Id("baseContext").Op(":=").Id("baseCtx").Dot("").Call(jen.Id("*").Qual("github.com/LongMarch7/higo/base","Context")))
 				}else if strings.Contains(par.Type,"[]*"){
 					handlerBody = append(handlerBody,jen.Id(par.Name).Op(":=").Make(jen.Id(par.Type),jen.Id("2")))
 				}else if strings.Contains(par.Type,"*"){

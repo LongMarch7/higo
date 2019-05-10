@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package pb;
+
+
+
+//The Web service definition.
+service Web {
+ rpc HtmlCall (HtmlCallRequest) returns (HtmlCallReply);
+ rpc ApiCall  (ApiCallRequest ) returns (ApiCallReply );
+}
+
+message HtmlCallRequest {
+ string method  = 1;
+ string pattern = 2;
+}
+
+message HtmlCallReply {
+ string rs  = 1;
+ string err = 2;
+}
+
+message ApiCallRequest {
+ string method  = 1;
+ string pattern = 2;
+}
+
+message ApiCallReply {
+ string rs  = 1;
+ string err = 2;
+}
+

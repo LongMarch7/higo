@@ -1,7 +1,5 @@
 package auth
 
-import (
-)
 type authOpt struct {
 	driverName         string
 	dataSourceName     string

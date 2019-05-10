@@ -9,11 +9,12 @@ import (
 
 type Limit struct{
 	opts ratelimitOpt
+	rateLimit rate.Limit
 }
 
 func defaultConfig() ratelimitOpt{
 	return ratelimitOpt{
-		rateLimit: rate.Every(time.Millisecond * 10),
+		interval: time.Millisecond * 10,
 		burst: 100,
 	}
 }
@@ -25,9 +26,10 @@ func NewLimiter(opts ...ROption) *Limit{
 	}
 	return &Limit{
 		opts: opt,
+		rateLimit: rate.Every(opt.interval),
 	}
 }
 
 func (l *Limit)Middleware() endpoint.Middleware {
-	return ratelimit.NewErroringLimiter(rate.NewLimiter(l.opts.rateLimit, l.opts.burst))
+	return ratelimit.NewErroringLimiter(rate.NewLimiter(l.rateLimit, l.opts.burst))
 }

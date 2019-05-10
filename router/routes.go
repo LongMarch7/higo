@@ -1,7 +1,6 @@
 package router
 
 import (
-    "github.com/LongMarch7/higo/app"
     "github.com/gorilla/mux"
     "google.golang.org/grpc/grpclog"
     "net/http"
@@ -18,7 +17,6 @@ type Routs struct{
 type Router struct {
     *mux.Router
     routes  []Routs
-    Cli     *app.Client
 }
 
 var supported = "GET POST PUT PATCH TRACE PATCH DELETE HEAD OPTIONS"
@@ -36,7 +34,8 @@ func NewRouter() *Router {
 
 func (r* Router)init(routes []Routs) {
     for _, value := range routes {
-        route := r.HandleFunc(value.Pattern, value.Handler)
+        Pattern := strings.ToLower(value.Pattern)
+        route := r.HandleFunc(Pattern, value.Handler)
         upMethod := strings.ToUpper(value.Mehods)
         methodSlice := strings.Split(upMethod, "|")
         var methods []string

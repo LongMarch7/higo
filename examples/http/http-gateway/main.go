@@ -1,11 +1,13 @@
 package main
 
+
 import (
 	"flag"
 	"github.com/LongMarch7/higo/app"
 	"github.com/LongMarch7/higo/middleware"
+	"github.com/LongMarch7/higo/service/base"
 	"github.com/LongMarch7/higo/router"
-	"github.com/LongMarch7/higo/service/examples/test"
+	"github.com/LongMarch7/higo/service/web"
 	"github.com/LongMarch7/higo/util/log"
 	"google.golang.org/grpc/grpclog"
 	"net/http"
@@ -45,20 +47,18 @@ func main() {
 		app.CRetryCount(3),
 		app.CRetryTime(time.Second * 3),
 	)
-	serviceName := "SettingServer"
+	serviceName := "WebServer"
 	client.AddEndpoint(app.CMiddleware(mw),app.CServiceName(serviceName))
-	//for {
-	//	rs, err := test.SayHelloProxy(client.GetClientEndpoint(serviceName))(context.Background(),&test.TestStrucAlias{Test1: "jack"})
-	//	grpclog.Info("[rs]=",rs," [err]=",err," [len(err)]",len(err))
-	//	time.Sleep(time.Second)
-	//}
+
 	r := router.NewRouter()
 
 	r.Add([]router.Routs{
-		{"post|get","/test/{serviceName}",test.MakeSayHelloHandler(client.GetClientEndpoint(serviceName))},
+		{"post|get","/admin",base.MakeReqDataMiddleware(
+			web.MakeHtmlCallHandler(client.GetClientEndpoint(serviceName),"admin:Index"))},
+		{"post|get","/cookie/{name}",base.MakeReqDataMiddleware(
+			web.MakeApiCallHandler(client.GetClientEndpoint(serviceName),"admin:Login"))},
 	})
-	// A route with a route variable:
-	//r.HandleFunc("/test/{serviceName}", test.MakeSayHelloHandler(client.GetClientEndpoint(serviceName)))
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/",http.FileServer(http.Dir("E://go_project/higo/src/github.com/LongMarch7/higo/public/static"))))
 	c = make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
 	wg.Add(1)
@@ -66,4 +66,3 @@ func main() {
 	go Producer()
 	wg.Wait()
 }
-

@@ -1,8 +1,0 @@
-[build]
-go get -v github.com/LongMarch7/higo/examples/hello/grpc-server
-go get -v github.com/LongMarch7/higo/examples/hello/http-gateway
-
-[run]
-
-grpc-server
-grpc-client

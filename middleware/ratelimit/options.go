@@ -1,17 +1,19 @@
 package ratelimit
 
-import "golang.org/x/time/rate"
+import (
+	"time"
+)
 
 type ratelimitOpt struct {
-	rateLimit rate.Limit
+	interval time.Duration
 	burst int
 }
 type ROption func(o *ratelimitOpt)
 
 
-func RateLimit(rateLimit rate.Limit) ROption {
+func Interval(interval time.Duration) ROption {
 	return func(o *ratelimitOpt) {
-		o.rateLimit = rateLimit
+		o.interval = interval
 	}
 }
 

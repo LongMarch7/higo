@@ -58,8 +58,9 @@ func (m *Middleware)AddMiddleware(opts ...MOption) *Middleware{
 		endpoint = zipkin.NewZipkin().Middleware(zOptions...)(endpoint)
 
 		lOptions := append([]logger.LOption{}, logger.MethodName(m.opts.methodName))
+		lOptions = append(lOptions, logger.Prefix(m.opts.prefix))
 		lOptions = append(lOptions, m.opts.lOptions...)
-		endpoint = logger.NewLogger(lOptions...).Middleware()(endpoint)
+		endpoint = logger.NewLogger().Middleware(lOptions...)(endpoint)
 
 		pOptions := append([]prometheus.POption{}, prometheus.Subsystem(m.opts.prefix))
 		pOptions = append(pOptions, prometheus.Name(m.opts.methodName))

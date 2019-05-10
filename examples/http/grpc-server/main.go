@@ -1,5 +1,4 @@
 package main
-
 import (
     "context"
     "flag"
@@ -7,14 +6,15 @@ import (
     "github.com/LongMarch7/higo/middleware"
     "github.com/LongMarch7/higo/middleware/prometheus"
     "github.com/LongMarch7/higo/middleware/zipkin"
-    "github.com/LongMarch7/higo/service/examples/test"
+    "github.com/LongMarch7/higo/service/web"
     "github.com/LongMarch7/higo/util/log"
     "google.golang.org/grpc/grpclog"
+    _ "github.com/LongMarch7/higo-web/controller/admin"
 )
 
 func main() {
     etcdServer := flag.String("e","http://localhost:8500","etcd service addr")
-    prefix := flag.String("n","SettingServer","prefix value")
+    prefix := flag.String("n","WebServer","prefix value")
     serviceAddress := flag.String("s","127.0.0.1","server addr")
     servicePort := flag.Int("p",0,"server port")
     threadMax := flag.String("c","1024","server thread pool max thread count")
@@ -34,21 +34,22 @@ func main() {
         app.SzOptions([]zipkin.ZOption{ zipkin.Name(*prefix)}),
     )
 
-    settingServer := &test.GrpcServer{}
+    webServer := &web.GrpcServer{}
+    webService := web.NewService()
     manager := middleware.NewMiddleware()
-    settingServer.SayHelloHandler = manager.AddMiddleware(
+    webServer.HtmlCallHandler = manager.AddMiddleware(
         middleware.Prefix(*prefix),
-        middleware.MethodName("SayHello"),
-        middleware.Endpoint(test.MakeSayHelloServerEndpoint(test.NewService())),
-        middleware.POptions([]prometheus.POption{ prometheus.Name("SayHello")}),
+        middleware.MethodName("HTML"),
+        middleware.Endpoint(web.MakeHtmlCallServerEndpoint(webService)),
+        middleware.POptions([]prometheus.POption{ prometheus.Name("HTML")}),
     ).NewServer()
-    settingServer.DeleteuserHandler = manager.AddMiddleware(
+    webServer.ApiCallHandler = manager.AddMiddleware(
         middleware.Prefix(*prefix),
-        middleware.MethodName("Deleteuser"),
-        middleware.Endpoint(test.MakeDeleteuserServerEndpoint(test.NewService())),
-        middleware.POptions([]prometheus.POption{ prometheus.Name("Deleteuser")}),
+        middleware.MethodName("API"),
+        middleware.Endpoint(web.MakeApiCallServerEndpoint(webService)),
+        middleware.POptions([]prometheus.POption{ prometheus.Name("API")}),
     ).NewServer()
 
-    server.RegisterServiceServer(test.MakeRegisteFunc(settingServer))
+    server.RegisterServiceServer(web.MakeRegisteFunc(webServer))
     server.Run()
 }

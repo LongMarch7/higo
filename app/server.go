@@ -59,7 +59,7 @@ func NewServer(opts ...SOption) *Server{
 }
 
 func (s *Server)init(){
-    ls, _ := net.Listen("tcp", s.opts.serverAddr+":"+strconv.Itoa(s.opts.serverPort))
+    ls, _ := net.Listen(s.opts.netType, s.opts.serverAddr+":"+strconv.Itoa(s.opts.serverPort))
     s.listenConnector = ls
 
     zip := zipkin.NewZipkin(s.opts.zOptions...)

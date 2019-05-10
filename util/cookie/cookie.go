@@ -1,10 +1,10 @@
 package cookie
 
 type Cookie struct{
-    T      string `json:"t"`    //token
+    T      string `json:"t"`    // token
     U      string `json:"u"`    // user id
     F      int    `json:"f"`    // flag
-    S      string `json:"s"`    //pwd
+    S      string `json:"s"`    // pwd
 }
 func (c* Cookie)UpdateCookie(token string, user string, pwd string, flag int){
     if user != c.U {

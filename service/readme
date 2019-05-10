@@ -1,13 +1,13 @@
 cd src/github.com/LongMarch7/higo/service
 [new server]
-kit-cli n s admin
-kit-cli n s setting -p admin    //create a setting service in admin parent service
+kit-cli n s web
+kit-cli n s web -p test    //create a setting service in admin parent service
 
 [add interface]
 modify service.go file
 
 
 [generate server]
-kit-cli g s admin -t grpc
-kit-cli g s setting -t grpc -p admin //generate a setting service in admin parent service
-kit-cli g s setting -t grpc -p admin -k //generate a setting service in admin parent service with http handler middleware
+kit-cli g s web -t grpc
+kit-cli g s web -t grpc -p test //generate a setting service in admin parent service
+kit-cli g s web -t grpc -p test -k //generate a setting service in admin parent service with http handler middleware

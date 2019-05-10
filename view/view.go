@@ -24,19 +24,28 @@ type ViewStruct struct {
 }
 
 var onceAction sync.Once
-var Template View
-var Dir = "E://go_project/higo/src/github.com/LongMarch7/higo/template"
-func init(){
+var templator View
+func defaultConfig() viewOpt{
+    return viewOpt{
+        dir: "E:/go_project/higo/src/github.com/LongMarch7/higo/template",
+    }
+}
+func NewView(opts ...VOption) View{
     onceAction.Do(func() {
-        template, err := NewView(Dir)
+        opt := defaultConfig()
+        for _, o := range opts {
+            o(&opt)
+        }
+        template, err := viewInit(opt.dir)
         if err != nil{
             panic(err)
         }
-        Template = template
+        templator = template
     })
+    return templator
 }
 //NewSimpleView returns a SimpleView with templates loaded from viewDir
-func NewView(viewDir string) (View, error) {
+func viewInit(viewDir string) (View, error) {
     info, err := os.Stat(viewDir)
     if err != nil {
         return nil, err

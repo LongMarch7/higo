@@ -8,7 +8,6 @@ import (
     "github.com/casbin/casbin/model"
     "github.com/casbin/casbin/persist"
     "github.com/jinzhu/gorm"
-    obj_model "github.com/LongMarch7/go-web/db/object/models"
 )
 
 
@@ -123,24 +122,24 @@ func (a *Adapter) close() {
 }
 
 func (a *Adapter) createTable() {
-    if a.db.HasTable(&obj_model.MicroCasbinRule{}) {
+    if a.db.HasTable(&MicroCasbinRule{}) {
         return
     }
 
-    err := a.db.CreateTable(&obj_model.MicroCasbinRule{}).Error
+    err := a.db.CreateTable(&MicroCasbinRule{}).Error
     if err != nil {
         panic(err)
     }
 }
 
 func (a *Adapter) dropTable() {
-    err := a.db.DropTable(&obj_model.MicroCasbinRule{}).Error
+    err := a.db.DropTable(&MicroCasbinRule{}).Error
     if err != nil {
         panic(err)
     }
 }
 
-func loadPolicyLine(line obj_model.MicroCasbinRule, model model.Model) {
+func loadPolicyLine(line MicroCasbinRule, model model.Model) {
     lineText := line.PType
     if line.V0 != "" {
         lineText += ", " + line.V0
@@ -166,7 +165,7 @@ func loadPolicyLine(line obj_model.MicroCasbinRule, model model.Model) {
 
 // LoadPolicy loads policy from database.
 func (a *Adapter) LoadPolicy(model model.Model) error {
-    var lines []obj_model.MicroCasbinRule
+    var lines []MicroCasbinRule
     err := a.db.Find(&lines).Error
     if err != nil {
         return err
@@ -179,8 +178,8 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
     return nil
 }
 
-func savePolicyLine(ptype string, rule []string) obj_model.MicroCasbinRule {
-    line := obj_model.MicroCasbinRule{}
+func savePolicyLine(ptype string, rule []string) MicroCasbinRule {
+    line := MicroCasbinRule{}
 
     line.PType = ptype
     if len(rule) > 0 {
@@ -267,7 +266,7 @@ func (a *Adapter) RemovePolicy(sec string, ptype string, rule []string) error {
 
 // RemoveFilteredPolicy removes policy rules that match the filter from the storage.
 func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int, fieldValues ...string) error {
-    line := obj_model.MicroCasbinRule{}
+    line := MicroCasbinRule{}
 
     line.PType = ptype
     if fieldIndex <= 0 && 0 < fieldIndex + len(fieldValues) {
@@ -292,7 +291,7 @@ func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int,
     return err
 }
 
-func rawDelete(db *gorm.DB, line obj_model.MicroCasbinRule) error {
+func rawDelete(db *gorm.DB, line MicroCasbinRule) error {
     queryArgs := []interface{}{line.PType}
 
     queryStr := "p_type = ?"
@@ -321,6 +320,6 @@ func rawDelete(db *gorm.DB, line obj_model.MicroCasbinRule) error {
         queryArgs = append(queryArgs, line.V5)
     }
     args := append([]interface{}{queryStr}, queryArgs...)
-    err := db.Delete(obj_model.MicroCasbinRule{}, args...).Error
+    err := db.Delete(MicroCasbinRule{}, args...).Error
     return err
 }
