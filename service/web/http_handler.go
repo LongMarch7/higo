@@ -2,9 +2,11 @@ package web
 
 import (
 	"github.com/LongMarch7/higo/base"
+	"github.com/LongMarch7/higo/util/define"
 	"github.com/LongMarch7/higo/util/error/html"
 	"github.com/LongMarch7/higo/util/error/json"
 	endpoint "github.com/go-kit/kit/endpoint"
+	"golang.org/x/net/context"
 	"net/http"
 )
 
@@ -13,8 +15,8 @@ func MakeHtmlCallHandler(e endpoint.Endpoint, pattern string) func(http.Response
 	return func(res http.ResponseWriter, req *http.Request) {
 		// TODO implement the business logic of HtmlCall
 		ctx := req.Context()
-		var method = req.Method
-		rs, err := clientProxy(ctx, method, pattern)
+		ctx = context.WithValue(ctx,define.ReqPatternName,pattern)
+		rs, err := clientProxy(ctx, pattern)
 		base.SetCookie(ctx,res)
 		if len(err) == 0 {
 			base.HtmlRender(res, []byte(rs))
@@ -28,8 +30,8 @@ func MakeApiCallHandler(e endpoint.Endpoint, pattern string) func(http.ResponseW
 	return func(res http.ResponseWriter, req *http.Request) {
 		// TODO implement the business logic of ApiCall
 		ctx := req.Context()
-		var method = req.Method
-		rs, err := clientProxy(ctx, method, pattern)
+		ctx = context.WithValue(ctx,define.ReqPatternName,pattern)
+		rs, err := clientProxy(ctx, pattern)
 		base.SetCookie(ctx,res)
 		if len(err) == 0 {
 			base.JsonRender(res, []byte(rs))

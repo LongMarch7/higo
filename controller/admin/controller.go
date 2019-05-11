@@ -5,6 +5,7 @@ import (
     "encoding/json"
     "fmt"
     "github.com/LongMarch7/higo/controller/base"
+    "github.com/LongMarch7/higo/util/define"
     "github.com/LongMarch7/higo/view"
     "golang.org/x/net/context"
     "google.golang.org/grpc"
@@ -28,7 +29,7 @@ func (a* adminController)Index(ctx context.Context) (rs string , err string){
 func (a* adminController)Login(ctx context.Context) (rs string , err string){
     //out := &bytes.Buffer{}
     //view.NewView().Render(out, name + "/index",nil)
-    params := ctx.Value("Parameter")
+    params := ctx.Value(define.ParameterName)
     fmt.Println(params)
     if params == nil{
         return "", "parameter get error"
@@ -41,7 +42,7 @@ func (a* adminController)Login(ctx context.Context) (rs string , err string){
         return "", "mux Unmarshal error"
     }
     fmt.Println(mapValues["name"])
-    header := metadata.Pairs("res_cookie", mapValues["name"])
+    header := metadata.Pairs(define.ResCookieName, mapValues["name"])
     grpc.SendHeader(ctx, header)
     return "{\"code\": 0, \"result\": \"login success\"}", ""
 }

@@ -10,6 +10,7 @@ import (
     base_context "github.com/LongMarch7/higo/base"
     local_transport "github.com/LongMarch7/higo/tansport"
     "github.com/LongMarch7/higo/tansport/pool"
+    "github.com/LongMarch7/higo/util/define"
     "github.com/LongMarch7/higo/util/sd/consul"
     "github.com/go-kit/kit/endpoint"
     "github.com/go-kit/kit/sd"
@@ -145,7 +146,7 @@ func (c *Client)AddEndpoint(opts ...COption){
     if tracer := zip.GetTracer(); tracer != nil {
         dialOpts = append(dialOpts,grpc.WithUnaryInterceptor(
             grpc_middleware.ChainUnaryClient(
-                withReqData(),
+                withReqData,
                 otgrpc.OpenTracingClientInterceptor(tracer, otgrpc.LogPayloads()),
             ),
         ))
@@ -169,37 +170,41 @@ func (c *Client)GetClientEndpoint(srv string) endpoint.Endpoint{
     }
 }
 
-func withReqData() grpc.UnaryClientInterceptor{
-    return func(
-        ctx context.Context,
-        method string,
-        req, resp interface{},
-        cc *grpc.ClientConn,
-        invoker grpc.UnaryInvoker,
-        opts ...grpc.CallOption,
-    ) error {
-        baseCtx := ctx.Value(base_context.StrucName)
-        if baseCtx == nil {
-            return errors.New("get context error")
-        }
-        baseContext := baseCtx.(*base_context.BaseContext)
-        md, ok := metadata.FromOutgoingContext(ctx)
-        if !ok {
-            md = metadata.New(nil)
-        } else {
-            md = md.Copy()
-        }
-        reqParams := baseContext.Params
-        for key, value := range reqParams {
-            md[key] = []string{value}
-        }
-        ctxWithMetadata := metadata.NewOutgoingContext(ctx, md)
-        return invoker(ctxWithMetadata,method,req,resp,cc,opts...)
+func withReqData(
+    ctx context.Context,
+    method string,
+    req, resp interface{},
+    cc *grpc.ClientConn,
+    invoker grpc.UnaryInvoker,
+    opts ...grpc.CallOption,
+) error {
+    baseCtx := ctx.Value(define.StrucName)
+    if baseCtx == nil {
+        return errors.New("get context error")
     }
+    baseContext := baseCtx.(*base_context.BaseContext)
+    pattern := ctx.Value(define.ReqPatternName)
+    if pattern == nil {
+        return errors.New("get pattern error")
+    }
+    md, ok := metadata.FromOutgoingContext(ctx)
+    if !ok {
+        md = metadata.New(nil)
+    } else {
+        md = md.Copy()
+    }
+    reqParams := baseContext.Params
+    for key, value := range reqParams {
+        md[key] = []string{value}
+    }
+    md[define.ReqPatternName] = []string{pattern.(string)}
+    ctxWithMetadata := metadata.NewOutgoingContext(ctx, md)
+    return invoker(ctxWithMetadata,method,req,resp,cc,opts...)
+
 }
 
 func GrpcClientAfter(ctx context.Context, header metadata.MD, trailer metadata.MD) context.Context{
-    baseCtx := ctx.Value(base_context.StrucName)
+    baseCtx := ctx.Value(define.StrucName)
     if baseCtx != nil {
         baseContext := baseCtx.(*base_context.BaseContext)
         if len(header) > 0{

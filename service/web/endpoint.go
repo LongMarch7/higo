@@ -11,7 +11,7 @@ import (
 func MakeHtmlCallServerEndpoint(s WebService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*pb.HtmlCallRequest)
-		rs, err := s.HtmlCall(ctx, req.Method, req.Pattern)
+		rs, err := s.HtmlCall(ctx, req.Pattern)
 		return &pb.HtmlCallReply{
 			Err: err,
 			Rs:  rs,
@@ -23,7 +23,7 @@ func MakeHtmlCallServerEndpoint(s WebService) endpoint.Endpoint {
 func MakeApiCallServerEndpoint(s WebService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*pb.ApiCallRequest)
-		rs, err := s.ApiCall(ctx, req.Method, req.Pattern)
+		rs, err := s.ApiCall(ctx, req.Pattern)
 		return &pb.ApiCallReply{
 			Err: err,
 			Rs:  rs,
@@ -32,14 +32,11 @@ func MakeApiCallServerEndpoint(s WebService) endpoint.Endpoint {
 }
 
 // HtmlCall implements Service. Primarily useful in a client.
-type HtmlCallFunc func(ctx context.Context, method string, pattern string) (rs string, err string)
+type HtmlCallFunc func(ctx context.Context, pattern string) (rs string, err string)
 
 func HtmlCallProxy(e endpoint.Endpoint) HtmlCallFunc {
-	return func(ctx context.Context, method string, pattern string) (rs string, err string) {
-		request := &pb.HtmlCallRequest{
-			Method:  method,
-			Pattern: pattern,
-		}
+	return func(ctx context.Context, pattern string) (rs string, err string) {
+		request := &pb.HtmlCallRequest{Pattern: pattern}
 		parameter := base.GrpcClientParameter{
 			Method:     "HtmlCall",
 			NewRlyFunc: func() interface{} { return &pb.HtmlCallReply{} },
@@ -56,14 +53,11 @@ func HtmlCallProxy(e endpoint.Endpoint) HtmlCallFunc {
 }
 
 // ApiCall implements Service. Primarily useful in a client.
-type ApiCallFunc func(ctx context.Context, method string, pattern string) (rs string, err string)
+type ApiCallFunc func(ctx context.Context, pattern string) (rs string, err string)
 
 func ApiCallProxy(e endpoint.Endpoint) ApiCallFunc {
-	return func(ctx context.Context, method string, pattern string) (rs string, err string) {
-		request := &pb.ApiCallRequest{
-			Method:  method,
-			Pattern: pattern,
-		}
+	return func(ctx context.Context, pattern string) (rs string, err string) {
+		request := &pb.ApiCallRequest{Pattern: pattern}
 		parameter := base.GrpcClientParameter{
 			Method:     "ApiCall",
 			NewRlyFunc: func() interface{} { return &pb.ApiCallReply{} },

@@ -2,6 +2,7 @@ package base
 
 import (
     "context"
+    "github.com/LongMarch7/higo/util/define"
     "google.golang.org/grpc/metadata"
 )
 
@@ -26,23 +27,28 @@ func GetController(name string) Controller{
     return controller[name]
 }
 
-func NewParameter(ctx context.Context, method string) context.Context{
+func NewParameter(ctx context.Context) context.Context{
     parameter :=new(Parameter)
-    parameter.Method = method
     md, ok := metadata.FromIncomingContext(ctx)
     if ok {
-        if value,ok1 := md["mux_params"]; ok1{
+        if value,ok1 := md[define.MuxParamsName]; ok1{
             parameter.MuxParams  = value[0]
         }
-        if value,ok1 := md["get_params"]; ok1{
+        if value,ok1 := md[define.GetParamsName]; ok1{
             parameter.GetParams  = value[0]
         }
-        if value,ok1 := md["post_params"]; ok1{
+        if value,ok1 := md[define.PostParamsName]; ok1{
             parameter.PostParams  = value[0]
         }
-        if value,ok1 := md["req_cookie"]; ok1{
+        if value,ok1 := md[define.ReqCookieName]; ok1{
             parameter.Cookie  = value[0]
         }
+        if value,ok1 := md[define.ReqMethodName]; ok1{
+            parameter.Method  = value[0]
+        }
+        if value,ok1 := md[define.ReqPatternName]; ok1{
+            ctx = context.WithValue(ctx,define.PatternName, value[0])
+        }
     }
-    return context.WithValue(ctx,"Parameter", parameter)
+    return context.WithValue(ctx,define.ParameterName, parameter)
 }

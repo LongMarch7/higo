@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"fmt"
+	"github.com/LongMarch7/higo/util/define"
 	"github.com/go-kit/kit/endpoint"
 	"context"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -137,7 +138,10 @@ func (p *Prometheus)PrometheusCounterEndpoint(counter *kitprometheus.Counter) en
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func() {
-				lvs := append(p.opts.lvs, fmt.Sprint(err != nil))
+				lvs := LvsByContext(ctx,err)
+				if len(lvs) == 0{
+					lvs = append(p.opts.lvs, fmt.Sprint(err != nil))
+				}
 				counter.With(lvs...).Add(p.opts.count)
 			}()
 			return next(ctx, request)
@@ -149,7 +153,10 @@ func (p *Prometheus)PrometheusSummaryEndpoint(summary *kitprometheus.Summary) en
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func(begin time.Time) {
-				lvs := append(p.opts.lvs, fmt.Sprint(err != nil))
+				lvs := LvsByContext(ctx,err)
+				if len(lvs) == 0{
+					lvs = append(p.opts.lvs, fmt.Sprint(err != nil))
+				}
 				summary.With(lvs...).Observe(time.Since(begin).Seconds())
 			}(time.Now())
 			return next(ctx, request)
@@ -161,7 +168,10 @@ func (p *Prometheus)PrometheusHistogramEndpoint(histogram *kitprometheus.Histogr
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func(begin time.Time) {
-				lvs := append(p.opts.lvs, fmt.Sprint(err != nil))
+				lvs := LvsByContext(ctx,err)
+				if len(lvs) == 0{
+					lvs = append(p.opts.lvs, fmt.Sprint(err != nil))
+				}
 				histogram.With(lvs...).Observe(time.Since(begin).Seconds())
 			}(time.Now())
 			return next(ctx, request)
@@ -173,7 +183,10 @@ func (p *Prometheus)PrometheusGaugeEndpoint(gauge *kitprometheus.Gauge) endpoint
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func() {
-				lvs := append(p.opts.lvs, fmt.Sprint(err != nil))
+				lvs := LvsByContext(ctx,err)
+				if len(lvs) == 0{
+					lvs = append(p.opts.lvs, fmt.Sprint(err != nil))
+				}
 				if p.opts.isSet {
 					gauge.With(lvs...).Set(p.opts.count)
 				}else{
@@ -183,4 +196,13 @@ func (p *Prometheus)PrometheusGaugeEndpoint(gauge *kitprometheus.Gauge) endpoint
 			return next(ctx, request)
 		}
 	}
+}
+
+func LvsByContext(ctx context.Context,err error) []string{
+	var lvs []string
+	methodNameByCtx := ctx.Value(define.PatternName)
+	if methodNameByCtx != nil {
+		lvs =append(lvs, "method", methodNameByCtx.(string), "error",fmt.Sprint(err != nil))
+	}
+	return lvs
 }

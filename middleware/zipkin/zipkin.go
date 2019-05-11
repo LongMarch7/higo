@@ -1,11 +1,12 @@
 package zipkin
 
 import (
+	"github.com/LongMarch7/higo/util/define"
 	"github.com/go-kit/kit/endpoint"
-	kitopentracing "github.com/go-kit/kit/tracing/opentracing"
 	"google.golang.org/grpc/grpclog"
 	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
 	stdopentracing "github.com/opentracing/opentracing-go"
+	otext "github.com/opentracing/opentracing-go/ext"
 	"context"
 	"sync"
 )
@@ -58,7 +59,29 @@ func (z *Zipkin)Middleware(opts ...ZOption) endpoint.Middleware {
 			}
 		}
 	}
-	return kitopentracing.TraceClient(z.zip, z.opts.methodName)
+	//return kitopentracing.TraceClient(z.zip, z.opts.methodName)
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (interface{}, error) {
+			var clientSpan stdopentracing.Span
+			method :=z.opts.methodName
+			methodNameByCtx := ctx.Value(define.PatternName)
+			if methodNameByCtx != nil {
+				method = methodNameByCtx.(string)
+			}
+			if parentSpan := stdopentracing.SpanFromContext(ctx); parentSpan != nil {
+				clientSpan = z.zip.StartSpan(
+					method,
+					stdopentracing.ChildOf(parentSpan.Context()),
+				)
+			} else {
+				clientSpan = z.zip.StartSpan(method)
+			}
+			defer clientSpan.Finish()
+			otext.SpanKindRPCClient.Set(clientSpan)
+			ctx = stdopentracing.ContextWithSpan(ctx, clientSpan)
+			return next(ctx, request)
+		}
+	}
 }
 
 

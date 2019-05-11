@@ -1,6 +1,7 @@
 package base
 
 import (
+	"github.com/LongMarch7/higo/util/define"
 	"github.com/gorilla/mux"
 	"encoding/json"
 	"github.com/LongMarch7/higo/base"
@@ -13,7 +14,7 @@ func MakeReqDataMiddleware(next func(http.ResponseWriter, *http.Request)) func(h
 	return func(res http.ResponseWriter, req *http.Request) {
 		// TODO implement the business logic of HtmlCall
 		ctx := req.Context()
-		baseCtx := ctx.Value(base.StrucName)
+		baseCtx := ctx.Value(define.StrucName)
 		if baseCtx == nil {
 			baseCtx = base.NewContext(res, req)
 		}
@@ -23,7 +24,7 @@ func MakeReqDataMiddleware(next func(http.ResponseWriter, *http.Request)) func(h
 		if len(muxVals) > 0 {
 			muxStrings, muxErr := json.Marshal(muxVals)
 			if muxErr == nil {
-				baseContext.Params["mux_params"]  = string(muxStrings)
+				baseContext.Params[define.MuxParamsName]  = string(muxStrings)
 			}
 		}
 
@@ -31,7 +32,7 @@ func MakeReqDataMiddleware(next func(http.ResponseWriter, *http.Request)) func(h
 		if len(getVals) > 0 {
 			getStrings, getErr := json.Marshal(getVals)
 			if getErr == nil {
-				baseContext.Params["get_params"]  = string(getStrings)
+				baseContext.Params[define.GetParamsName]  = string(getStrings)
 			}
 		}
 
@@ -39,15 +40,16 @@ func MakeReqDataMiddleware(next func(http.ResponseWriter, *http.Request)) func(h
 		if postErr == nil {
 			vals := string(posgVals)
 			if len(vals) > 0 {
-				baseContext.Params["post_params"] = vals
+				baseContext.Params[define.PostParamsName] = vals
 			}
 		}
 
-		c, err := req.Cookie("info")
+		c, err := req.Cookie(define.CookieName)
 		if err == nil {
-			baseContext.Params["req_cookie"] = c.Value
+			baseContext.Params[define.ReqCookieName] = c.Value
 		}
-		ctx = context.WithValue(ctx, base.StrucName,baseContext)
+		baseContext.Params[define.ReqMethodName] = req.Method
+		ctx = context.WithValue(ctx, define.StrucName,baseContext)
 		req = req.WithContext(ctx)
 		next(res,req)
 	}

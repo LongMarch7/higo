@@ -4,6 +4,7 @@
 package base
 
 import (
+    "github.com/LongMarch7/higo/util/define"
     "google.golang.org/grpc/metadata"
     "net/http"
     gorilla_context "github.com/gorilla/context"
@@ -38,7 +39,6 @@ type BaseContext struct {
     response    http.ResponseWriter
 }
 
-const StrucName = "baseContext"
 
 // NewContext creates new context for the given w and r
 func NewContext(w http.ResponseWriter, r *http.Request) *BaseContext {
@@ -144,13 +144,13 @@ func TextRender(res http.ResponseWriter, data []byte) {
 }
 
 func SetCookie(ctx context.Context, res http.ResponseWriter){
-    baseCtx := ctx.Value(StrucName)
+    baseCtx := ctx.Value(define.StrucName)
     if baseCtx != nil {
         cookie := baseCtx.(*BaseContext).GrpcHeader
-        if value,ok := cookie["res_cookie"]; ok{
+        if value,ok := cookie[define.ResCookieName]; ok{
             if len(cookie) > 0{
                 http.SetCookie(res, &http.Cookie{
-                    Name:  "info",
+                    Name:  define.CookieName,
                     Value: value[0],
                     HttpOnly: true,
                 })

@@ -2,6 +2,7 @@ package app
 
 import (
     "context"
+    "github.com/LongMarch7/higo/controller/base"
     "github.com/LongMarch7/higo/util/define"
     "github.com/LongMarch7/higo/util/log"
     "github.com/gorilla/mux"
@@ -67,6 +68,7 @@ func (s *Server)init(){
     var opts []grpc.ServerOption
     if tracer := zip.GetTracer(); tracer != nil {
         opts = append(opts,grpc_middleware.WithUnaryServerChain(
+            ReqMetadaResolve,
             otgrpc.OpenTracingServerInterceptor(tracer, otgrpc.LogPayloads()),
         ),)
     }else{
@@ -125,4 +127,9 @@ Loop:
         time.Sleep(500 * time.Millisecond)
     }
     s.wg.Done()
+}
+
+func ReqMetadaResolve(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error){
+    ctx = base.NewParameter(ctx)
+    return handler(ctx, req)
 }

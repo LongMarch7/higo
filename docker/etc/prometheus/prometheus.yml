@@ -20,7 +20,7 @@ scrape_configs:
         labels:
           group: 'local'
 
-  - job_name: 'bookServer'
+  - job_name: 'microServer'
 
     scrape_interval: 5s
 
