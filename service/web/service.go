@@ -2,24 +2,32 @@ package web
 
 import (
 	"context"
+
 	"github.com/LongMarch7/higo/controller"
+	"github.com/LongMarch7/higo/util/define"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 // WebService describes the service.
 type WebService interface {
 	// Add your methods here
-	HtmlCall(ctx context.Context, pattern string) (rs string, err string)
-	ApiCall(ctx context.Context, pattern string) (rs string, err string)
+	HtmlCall(ctx context.Context, pattern string) (rs string, err error)
+	ApiCall(ctx context.Context, pattern string) (rs string, err error)
 }
 type basicWebService struct{}
 
-func (b *basicWebService) HtmlCall(ctx context.Context, pattern string) (rs string, err string) {
+func (b *basicWebService) HtmlCall(ctx context.Context, pattern string) (rs string, err error) {
 	// TODO implement the business logic of HtmlCall
-	return controller.ControllerCall(ctx,pattern)
+	header := metadata.Pairs(define.ResTypeName, "html")
+	grpc.SendHeader(ctx, header)
+	return controller.ControllerCall(ctx, pattern)
 }
-func (b *basicWebService) ApiCall(ctx context.Context, pattern string) (rs string, err string) {
+func (b *basicWebService) ApiCall(ctx context.Context, pattern string) (rs string, err error) {
 	// TODO implement the business logic of ApiCall
-	return controller.ControllerCall(ctx,pattern)
+	header := metadata.Pairs(define.ResTypeName, "json")
+	grpc.SendHeader(ctx, header)
+	return controller.ControllerCall(ctx, pattern)
 }
 
 // NewBasicWebService returns a naive, stateless implementation of WebService.

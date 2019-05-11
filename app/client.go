@@ -147,7 +147,7 @@ func (c *Client)AddEndpoint(opts ...COption){
         dialOpts = append(dialOpts,grpc.WithUnaryInterceptor(
             grpc_middleware.ChainUnaryClient(
                 withReqData,
-                otgrpc.OpenTracingClientInterceptor(tracer, otgrpc.LogPayloads()),
+                otgrpc.OpenTracingClientInterceptor(tracer),
             ),
         ))
     }

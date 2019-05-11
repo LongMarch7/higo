@@ -143,19 +143,43 @@ func TextRender(res http.ResponseWriter, data []byte) {
     res.Write(data)
 }
 
-func SetCookie(ctx context.Context, res http.ResponseWriter){
+func GetDataFromGrpcResHeader(ctx context.Context, name string) (string, bool){
     baseCtx := ctx.Value(define.StrucName)
     if baseCtx != nil {
         cookie := baseCtx.(*BaseContext).GrpcHeader
-        if value,ok := cookie[define.ResCookieName]; ok{
-            if len(cookie) > 0{
-                http.SetCookie(res, &http.Cookie{
-                    Name:  define.CookieName,
-                    Value: value[0],
-                    HttpOnly: true,
-                })
+        if value, ok := cookie[name]; ok {
+            retValue :=""
+            if len(value) > 0 {
+                retValue = value[0]
             }
+            return retValue, ok
         }
+    }
+    return "",false
+}
+func GetDataFromGrpcResTrailer(ctx context.Context, name string) (string, bool){
+    baseCtx := ctx.Value(define.StrucName)
+    if baseCtx != nil {
+        cookie := baseCtx.(*BaseContext).GrpcTrailer
+        if value, ok := cookie[name]; ok {
+            retValue :=""
+            if len(value) > 0 {
+                retValue = value[0]
+            }
+            return retValue, ok
+        }
+    }
+    return "",false
+}
+
+func SetCookie(ctx context.Context, res http.ResponseWriter){
+    value,ok :=GetDataFromGrpcResHeader(ctx, define.ResCookieName)
+    if ok{
+        http.SetCookie(res, &http.Cookie{
+            Name:  define.CookieName,
+            Value: value,
+            HttpOnly: true,
+        })
     }
 }
 

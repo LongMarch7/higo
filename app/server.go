@@ -68,8 +68,8 @@ func (s *Server)init(){
     var opts []grpc.ServerOption
     if tracer := zip.GetTracer(); tracer != nil {
         opts = append(opts,grpc_middleware.WithUnaryServerChain(
+            otgrpc.OpenTracingServerInterceptor(tracer),
             ReqMetadaResolve,
-            otgrpc.OpenTracingServerInterceptor(tracer, otgrpc.LogPayloads()),
         ),)
     }else{
         opts =[]grpc.ServerOption{grpc.UnaryInterceptor(grpc_transport.Interceptor)}

@@ -1,14 +1,18 @@
 package zipkin
 
 import (
+	"encoding/json"
 	"github.com/LongMarch7/higo/util/define"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/opentracing/opentracing-go/log"
 	"google.golang.org/grpc/grpclog"
 	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
 	stdopentracing "github.com/opentracing/opentracing-go"
 	otext "github.com/opentracing/opentracing-go/ext"
 	"context"
+	"strings"
 	"sync"
+	"github.com/LongMarch7/higo/base"
 )
 
 type Zipkin struct{
@@ -61,7 +65,7 @@ func (z *Zipkin)Middleware(opts ...ZOption) endpoint.Middleware {
 	}
 	//return kitopentracing.TraceClient(z.zip, z.opts.methodName)
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, request interface{}) (interface{}, error) {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			var clientSpan stdopentracing.Span
 			method :=z.opts.methodName
 			methodNameByCtx := ctx.Value(define.PatternName)
@@ -76,7 +80,24 @@ func (z *Zipkin)Middleware(opts ...ZOption) endpoint.Middleware {
 			} else {
 				clientSpan = z.zip.StartSpan(method)
 			}
-			defer clientSpan.Finish()
+			baseCtx := ctx.Value(define.StrucName)
+			if baseCtx != nil {
+				pStrings, pErr := json.Marshal(baseCtx.(*base.BaseContext).Params)
+				if pErr == nil {
+					clientSpan.LogFields(log.String("gRPC req", string(pStrings)))
+				}
+			}
+			defer func() {
+				if err == nil{
+					value,ok := base.GetDataFromGrpcResHeader(ctx,define.ResTypeName)
+					if ok{
+						if strings.Compare(value,"html") != 0 {
+							clientSpan.LogFields(log.Object("gRPC res", response))
+						}
+					}
+				}
+				clientSpan.Finish()
+			}()
 			otext.SpanKindRPCClient.Set(clientSpan)
 			ctx = stdopentracing.ContextWithSpan(ctx, clientSpan)
 			return next(ctx, request)

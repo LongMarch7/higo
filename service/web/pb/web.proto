@@ -15,8 +15,7 @@ message HtmlCallRequest {
 }
 
 message HtmlCallReply {
- string rs  = 1;
- string err = 2;
+ string rs = 1;
 }
 
 message ApiCallRequest {
@@ -24,7 +23,6 @@ message ApiCallRequest {
 }
 
 message ApiCallReply {
- string rs  = 1;
- string err = 2;
+ string rs = 1;
 }
 

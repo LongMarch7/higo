@@ -676,10 +676,17 @@ func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 				rs = append(rs, jen.Id(p.Name).Id(tp))
 			}
 			rt = append(rt, jen.Id(p.Name))
-			resList = append(
-				resList,
-				jen.Id(rpName).Dot("").Call(jen.Id("*").Qual(g.pbPath,m.Name+"Reply")).Dot(utils.ToCamelCase(p.Name)),
-			)
+			if p.Type == "error"{
+				resList = append(
+					resList,
+					jen.Id("nil"),
+				)
+			}else{
+				resList = append(
+					resList,
+					jen.Id(rpName).Dot("").Call(jen.Id("*").Qual(g.pbPath,m.Name+"Reply")).Dot(utils.ToCamelCase(p.Name)),
+				)
+			}
 		}
 
 		parameterDic := jen.Dict{}
@@ -695,7 +702,7 @@ func (g *generateServiceEndpoints) generateEndpointsClientMethods() {
 			),
 			jen.If(
 				jen.Id("grpcErr").Op("!=").Nil().Block(
-					jen.Err().Op("=").Id("grpcErr").Dot("Error").Call(),
+					jen.Err().Op("=").Id("grpcErr"),
 					jen.Return(),
 				),
 			),
@@ -741,7 +748,7 @@ func (g *generateServiceEndpoints) generateMethodEndpoint() (err error) {
 	if err != nil {
 		return err
 	}
-	errTypeFound := false
+	//errTypeFound := false
 	for _, m := range g.serviceInterface.Methods {
 		// For the request struct
 		reqFields := []jen.Code{}
@@ -781,13 +788,13 @@ func (g *generateServiceEndpoints) generateMethodEndpoint() (err error) {
 			mCallParam = append(mCallParam, jen.Id("req").Dot(utils.ToCamelCase(p.Name)))
 
 		}
-		methodHasError := false
+		//methodHasError := false
 		errName := ""
 		for _, p := range m.Results {
 			if p.Type == "error" {
-				errTypeFound = true
-				methodHasError = true
-				errName = utils.ToCamelCase(p.Name)
+				retList = append(retList, jen.Id(p.Name))
+				errName = p.Name
+				continue
 			}
 			tp := p.Type
 			ts := strings.Split(tp, ".")
@@ -863,7 +870,7 @@ func (g *generateServiceEndpoints) generateMethodEndpoint() (err error) {
 					jen.Id("*").Qual(g.pbPath,m.Name + "Request"),
 				),
 				jen.List(retList...).Op(":=").Id("s").Dot(m.Name).Call(mCallParam...),
-				jen.Return(jen.Id("&").Qual(g.pbPath,m.Name+"Reply").Values(respParam), jen.Nil()),
+				jen.Return(jen.Id("&").Qual(g.pbPath,m.Name+"Reply").Values(respParam), jen.Id(errName)),
 			}
 			if len(mCallParam) == 1 {
 				bd = bd[1:]
@@ -898,42 +905,42 @@ func (g *generateServiceEndpoints) generateMethodEndpoint() (err error) {
 			)
 			g.code.NewLine()
 		}
-		if !failedFound && methodHasError {
-			g.code.Raw().Comment("Failed implements Failer.").Line()
-			g.code.appendFunction(
-				"Failed",
-				jen.Id("r").Id(m.Name+"Response"),
-				[]jen.Code{},
-				[]jen.Code{},
-				"error",
-				jen.Return(jen.Id("r").Dot(errName)),
-			)
-			g.code.NewLine()
-		}
+		//if !failedFound && methodHasError {
+		//	g.code.Raw().Comment("Failed implements Failer.").Line()
+		//	g.code.appendFunction(
+		//		"Failed",
+		//		jen.Id("r").Id(m.Name+"Response"),
+		//		[]jen.Code{},
+		//		[]jen.Code{},
+		//		"error",
+		//		jen.Return(jen.Id("r").Dot(errName)),
+		//	)
+		//	g.code.NewLine()
+		//}
 	}
-	if errTypeFound {
-		failureFound := false
-		for _, v := range g.file.Interfaces {
-			if v.Name == "Failure" {
-				failureFound = true
-			}
-		}
-		if !failureFound {
-			g.code.appendMultilineComment(
-				[]string{
-					"Failure is an interface that should be implemented by response types.",
-					"Response encoders can check if responses are Failer, and if so they've",
-					"failed, and if so encode them using a separate write path based on the error.",
-				},
-			)
-			g.code.NewLine()
-
-			g.code.Raw().Type().Id("Failure").Interface(
-				jen.Id("Failed").Params().Error(),
-			)
-			g.code.NewLine()
-		}
-	}
+	//if errTypeFound {
+	//	failureFound := false
+	//	for _, v := range g.file.Interfaces {
+	//		if v.Name == "Failure" {
+	//			failureFound = true
+	//		}
+	//	}
+	//	if !failureFound {
+	//		g.code.appendMultilineComment(
+	//			[]string{
+	//				"Failure is an interface that should be implemented by response types.",
+	//				"Response encoders can check if responses are Failer, and if so they've",
+	//				"failed, and if so encode them using a separate write path based on the error.",
+	//			},
+	//		)
+	//		g.code.NewLine()
+	//
+	//		g.code.Raw().Type().Id("Failure").Interface(
+	//			jen.Id("Failed").Params().Error(),
+	//		)
+	//		g.code.NewLine()
+	//	}
+	//}
 	return
 }
 

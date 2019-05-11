@@ -8,6 +8,7 @@ import (
     "github.com/LongMarch7/higo/util/define"
     "github.com/LongMarch7/higo/view"
     "golang.org/x/net/context"
+    "golang.org/x/tools/go/ssa/interp/testdata/src/errors"
     "google.golang.org/grpc"
     "google.golang.org/grpc/metadata"
 )
@@ -20,30 +21,30 @@ func init(){
     base.AddController(name, controller)
 }
 
-func (a* adminController)Index(ctx context.Context) (rs string , err string){
+func (a* adminController)Index(ctx context.Context) (rs string , err error){
     out := &bytes.Buffer{}
     view.NewView().Render(out, name + "/index",nil)
-    return out.String(), ""
+    return out.String(), nil
 }
 
-func (a* adminController)Login(ctx context.Context) (rs string , err string){
+func (a* adminController)Login(ctx context.Context) (rs string , err error){
     //out := &bytes.Buffer{}
     //view.NewView().Render(out, name + "/index",nil)
     params := ctx.Value(define.ParameterName)
     fmt.Println(params)
     if params == nil{
-        return "", "parameter get error"
+        return "", errors.New("parameter get error")
     }
     parameter := params.(*base.Parameter)
     muxParame := parameter.MuxParams
     var mapValues = make(map[string]string)
     muxErr := json.Unmarshal([]byte(muxParame),&mapValues)
     if muxErr != nil{
-        return "", "mux Unmarshal error"
+        return "",  errors.New("mux Unmarshal error")
     }
     fmt.Println(mapValues["name"])
     header := metadata.Pairs(define.ResCookieName, mapValues["name"])
     grpc.SendHeader(ctx, header)
-    return "{\"code\": 0, \"result\": \"login success\"}", ""
+    return "{\"code\": 0, \"result\": \"login success\"}", nil
 }
 
