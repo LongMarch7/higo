@@ -9,39 +9,53 @@ import (
 )
 
 //LoggerConfig config of logger
-type LoggerConfig struct {
-    Level      string `yaml:"level"`       //debug  info  warn  error
-    Encoding   string `yaml:"encoding"`    //json or console
-    CallFull   bool   `yaml:"call_full"`   //whether full call path or short path, default is short
-    Filename   string `yaml:"file_name"`   //log file name
-    MaxSize    int    `yaml:"max_size"`    //max size of log.(MB)
-    MaxAge     int    `yaml:"max_age"`     //time to keep, (day)
-    MaxBackups int    `yaml:"max_backups"` //max file numbers
-    LocalTime  bool   `yaml:"local_time"`  //(default UTC)
-    Compress   bool   `yaml:"compress"`    //default false
+const TYPE_FILE = "file"
+const TYPE_Console = "console"
+type Config struct {
+    Type       string `json:"type"`         //1 - out file  2 out consol
+    Level      string `json:"level"`       //debug  info  warn  error
+    Encoding   string `json:"encoding"`    //json or console
+    CallFull   bool   `json:"call_full"`   //whether full call path or short path, default is short
+    Filename   string `json:"file_name"`   //log file name
+    MaxSize    int    `json:"max_size"`    //max size of log.(MB)
+    MaxAge     int    `json:"max_age"`     //time to keep, (day)
+    MaxBackups int    `json:"max_backups"` //max file numbers
+    LocalTime  bool   `json:"local_time"`  //(default UTC)
+    Compress   bool   `json:"compress"`    //default false
 }
 
 func convertLogLevel(levelStr string) (level zapcore.Level) {
     switch levelStr {
     case "debug":
+        fallthrough
+    case "DEBUG":
         level = zap.DebugLevel
     case "info":
+        fallthrough
+    case "INFO":
         level = zap.InfoLevel
     case "warn":
+        fallthrough
+    case "WARN":
         level = zap.WarnLevel
     case "error":
+        fallthrough
+    case "ERROR":
+        level = zap.ErrorLevel
+    default:
         level = zap.ErrorLevel
     }
     return
 }
 
 //NewDefaultLoggerConfig create a default config
-func NewDefaultLoggerConfig() *LoggerConfig {
-    return &LoggerConfig{
+func NewDefaultLoggerConfig() *Config {
+    return &Config{
         Level:      "debug",
         MaxSize:    1,
         MaxAge:     1,
         MaxBackups: 10,
+        LocalTime: true,
     }
 }
 
@@ -52,10 +66,11 @@ var atom zap.AtomicLevel
 // 	enc.AppendString(t.Format("2006-01-02 15:04:05"))
 // }
 //NewLogger create logger by config
-func (lconf *LoggerConfig) NewLogger() *ZapLogger {
+func (lconf *Config) NewLogger() *ZapLogger {
     if lconf.Filename == "" {
         config := zap.NewProductionConfig()
         config.DisableCaller = true
+        config.Level =  zap.NewAtomicLevelAt(convertLogLevel(lconf.Level))
         logger, _ := config.Build()
         //zap.NewProduction(zap.AddCallerSkip(2))
         return NewZapLogger(logger)
@@ -88,7 +103,7 @@ func (lconf *LoggerConfig) NewLogger() *ZapLogger {
     return NewZapLogger(logger)
 }
 
-func AutoSetLogLevel(level  string){
+func SetLogLevel(level  string){
     atom.SetLevel(convertLogLevel(level))
 }
 

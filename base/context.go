@@ -174,11 +174,12 @@ func GetDataFromGrpcResTrailer(ctx context.Context, name string) (string, bool){
 
 func SetCookie(ctx context.Context, res http.ResponseWriter){
     value,ok :=GetDataFromGrpcResHeader(ctx, define.ResCookieName)
-    if ok{
+    if ok && len(value) > 0{
         http.SetCookie(res, &http.Cookie{
             Name:  define.CookieName,
             Value: value,
             HttpOnly: true,
+            Path: "/",
         })
     }
 }

@@ -3,6 +3,7 @@ package zipkin
 import (
 	"encoding/json"
 	"github.com/LongMarch7/higo/util/define"
+	"github.com/LongMarch7/higo/util/global"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/opentracing/opentracing-go/log"
 	"google.golang.org/grpc/grpclog"
@@ -31,6 +32,7 @@ func defaultConfig() zipkinOpt{
 		url:       "http://127.0.0.1:9411/api/v1/spans",
 		hostPort:  "localhost:0",
 		debug:     false,
+		maxLogsPerSpan: 10000,
 		methodName: "default",
 	}
 }
@@ -65,13 +67,16 @@ func (z *Zipkin)Middleware(opts ...ZOption) endpoint.Middleware {
 	}
 	//return kitopentracing.TraceClient(z.zip, z.opts.methodName)
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		method :=z.opts.methodName
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			var clientSpan stdopentracing.Span
-			method :=z.opts.methodName
-			methodNameByCtx := ctx.Value(define.PatternName)
-			if methodNameByCtx != nil {
-				method = methodNameByCtx.(string)
+			if global.AppMode == define.SvrMode{
+				methodNameByCtx := ctx.Value(define.ReqPatternName)
+				if methodNameByCtx != nil {
+					method = methodNameByCtx.(string)
+				}
 			}
+
 			if parentSpan := stdopentracing.SpanFromContext(ctx); parentSpan != nil {
 				clientSpan = z.zip.StartSpan(
 					method,
@@ -113,7 +118,7 @@ func (z *Zipkin)Init() (stdopentracing.Tracer, zipkinot.Collector){
 		return nil,nil
 	}
 	recorder := zipkinot.NewRecorder(local_collector, z.opts.debug, z.opts.hostPort, z.opts.name)
-	newTracer, err := zipkinot.NewTracer(recorder)
+	newTracer, err := zipkinot.NewTracer(recorder,zipkinot.WithMaxLogsPerSpan(z.opts.maxLogsPerSpan))
 	if err != nil {
 		grpclog.Error("zipkinot.NewTracer faild", z.opts.name)
 		return nil, local_collector

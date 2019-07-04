@@ -20,13 +20,13 @@ type basicWebService struct{}
 func (b *basicWebService) HtmlCall(ctx context.Context, pattern string) (rs string, err error) {
 	// TODO implement the business logic of HtmlCall
 	header := metadata.Pairs(define.ResTypeName, "html")
-	grpc.SendHeader(ctx, header)
+	grpc.SetHeader(ctx, header)
 	return controller.ControllerCall(ctx, pattern)
 }
 func (b *basicWebService) ApiCall(ctx context.Context, pattern string) (rs string, err error) {
 	// TODO implement the business logic of ApiCall
 	header := metadata.Pairs(define.ResTypeName, "json")
-	grpc.SendHeader(ctx, header)
+	grpc.SetHeader(ctx, header)
 	return controller.ControllerCall(ctx, pattern)
 }
 

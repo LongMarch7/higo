@@ -37,13 +37,8 @@ func (a* adminController)Login(ctx context.Context) (rs string , err error){
     }
     parameter := params.(*base.Parameter)
     muxParame := parameter.MuxParams
-    var mapValues = make(map[string]string)
-    muxErr := json.Unmarshal([]byte(muxParame),&mapValues)
-    if muxErr != nil{
-        return "",  errors.New("mux Unmarshal error")
-    }
-    fmt.Println(mapValues["name"])
-    header := metadata.Pairs(define.ResCookieName, mapValues["name"])
+    fmt.Println(muxParame["name"])
+    header := metadata.Pairs(define.ResCookieName, muxParame["name"])
     grpc.SendHeader(ctx, header)
     return "{\"code\": 0, \"result\": \"login success\"}", nil
 }

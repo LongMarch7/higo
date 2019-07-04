@@ -2,21 +2,18 @@ package auth
 
 
 import (
-    "errors"
+    "github.com/LongMarch7/higo/db"
+    "github.com/go-xorm/xorm"
     "runtime"
 
     "github.com/casbin/casbin/model"
     "github.com/casbin/casbin/persist"
-    "github.com/jinzhu/gorm"
 )
 
 
 // Adapter represents the Gorm adapter for policy storage.
 type Adapter struct {
-    driverName     string
-    dataSourceName string
-    dbSpecified    bool
-    db             *gorm.DB
+    db             *xorm.Engine
 }
 
 // finalizer is the destructor for Adapter.
@@ -29,21 +26,21 @@ func finalizer(a *Adapter) {
 // It's up to whether you have specified an existing DB in dataSourceName.
 // If dbSpecified == true, you need to make sure the DB in dataSourceName exists.
 // If dbSpecified == false, the adapter will automatically create a DB named "casbin".
-func NewAdapter(driverName string, dataSourceName string, tableName string, dbSpecified ...bool) *Adapter {
+func NewAdapter() *Adapter {
     a := &Adapter{}
-    a.driverName = driverName
-    a.dataSourceName = dataSourceName
+    //a.driverName = driverName
+    //a.dataSourceName = dataSourceName
 
-    if len(dbSpecified) == 0 {
-        a.dbSpecified = false
-    } else if len(dbSpecified) == 1 {
-        a.dbSpecified = dbSpecified[0]
-    } else {
-        panic(errors.New("invalid parameter: dbSpecified"))
-    }
+    //if len(dbSpecified) == 0 {
+    //    a.dbSpecified = false
+    //} else if len(dbSpecified) == 1 {
+    //    a.dbSpecified = dbSpecified[0]
+    //} else {
+    //    panic(errors.New("invalid parameter: dbSpecified"))
+    //}
 
     // Open the DB, create it if not existed.
-    a.open(tableName)
+    a.open()
 
     // Call the destructor when the object is released.
     runtime.SetFinalizer(a, finalizer)
@@ -51,7 +48,7 @@ func NewAdapter(driverName string, dataSourceName string, tableName string, dbSp
     return a
 }
 
-func NewAdapterByDB(db *gorm.DB) *Adapter {
+func NewAdapterByDB(db *xorm.Engine) *Adapter {
     a := &Adapter{
         db: db,
     }
@@ -85,34 +82,38 @@ func NewAdapterByDB(db *gorm.DB) *Adapter {
 //    return err
 //}
 
-func (a *Adapter) open(tableName string) {
-    var err error
-    var db *gorm.DB
-
-    if a.dbSpecified {
-        db, err = gorm.Open(a.driverName, a.dataSourceName)
-        if err != nil {
-            panic(err)
-        }
-    } else {
-        //if err = a.createDatabase(); err != nil {
-        //    panic(err)
-        //}
-
-        if a.driverName == "postgres" {
-            db, err = gorm.Open(a.driverName, a.dataSourceName + " dbname=" + tableName)
-        } else if a.driverName == "sqlite3" {
-            db, err = gorm.Open(a.driverName, a.dataSourceName)
-        } else {
-            db, err = gorm.Open(a.driverName, a.dataSourceName+tableName)
-        }
-        if err != nil {
-            panic(err)
-        }
-    }
-
-    a.db = db
-
+func (a *Adapter) open() {
+    //var err error
+    ////var db *gorm.DB
+    //var engine *xorm.Engine
+    //
+    //if a.dbSpecified {
+    //    //db, err = gorm.Open(a.driverName, a.dataSourceName)
+    //    engine, err = xorm.NewEngine(a.driverName, a.dataSourceName)
+    //    if err != nil {
+    //        panic(err)
+    //    }
+    //} else {
+    //    //if err = a.createDatabase(); err != nil {
+    //    //    panic(err)
+    //    //}
+    //
+    //    if a.driverName == "postgres" {
+    //        //db, err = gorm.Open(a.driverName, a.dataSourceName + " dbname=" + tableName)
+    //        engine, err = xorm.NewEngine(a.driverName, a.dataSourceName + " dbname=" + tableName)
+    //    } else if a.driverName == "sqlite3" {
+    //        //db, err = gorm.Open(a.driverName, a.dataSourceName)
+    //        engine, err = xorm.NewEngine(a.driverName, a.dataSourceName)
+    //    } else {
+    //        //db, err = gorm.Open(a.driverName, a.dataSourceName+tableName)
+    //    }
+    //    if err != nil {
+    //        panic(err)
+    //    }
+    //}
+    //
+    //a.db = db
+    a.db = db.NewDb(db.DefaultNAME).Engine()
     a.createTable()
 }
 
@@ -122,18 +123,18 @@ func (a *Adapter) close() {
 }
 
 func (a *Adapter) createTable() {
-    if a.db.HasTable(&MicroCasbinRule{}) {
+    if ok,err:=a.db.IsTableExist(&MicroCasbinRule{}); ok && err == nil {
         return
     }
 
-    err := a.db.CreateTable(&MicroCasbinRule{}).Error
+    err := a.db.CreateTables(&MicroCasbinRule{})
     if err != nil {
         panic(err)
     }
 }
 
 func (a *Adapter) dropTable() {
-    err := a.db.DropTable(&MicroCasbinRule{}).Error
+    err := a.db.DropTables(&MicroCasbinRule{})
     if err != nil {
         panic(err)
     }
@@ -166,7 +167,7 @@ func loadPolicyLine(line MicroCasbinRule, model model.Model) {
 // LoadPolicy loads policy from database.
 func (a *Adapter) LoadPolicy(model model.Model) error {
     var lines []MicroCasbinRule
-    err := a.db.Find(&lines).Error
+    err := a.db.Find(&lines)
     if err != nil {
         return err
     }
@@ -212,7 +213,7 @@ func (a *Adapter) SavePolicy(model model.Model) error {
     for ptype, ast := range model["p"] {
         for _, rule := range ast.Policy {
             line := savePolicyLine(ptype, rule)
-            err := a.db.Create(&line).Error
+            _, err := a.db.InsertOne(&line)
             if err != nil {
                 return err
             }
@@ -222,7 +223,7 @@ func (a *Adapter) SavePolicy(model model.Model) error {
     for ptype, ast := range model["g"] {
         for _, rule := range ast.Policy {
             line := savePolicyLine(ptype, rule)
-            err := a.db.Create(&line).Error
+            _,err := a.db.InsertOne(&line)
             if err != nil {
                 return err
             }
@@ -232,28 +233,10 @@ func (a *Adapter) SavePolicy(model model.Model) error {
     return nil
 }
 
-func (a *Adapter) DeleteFromDb(rule []string) error {
-    line := savePolicyLine(rule[0], rule[1:])
-    err := a.db.Delete(&line).Error
-    if err != nil {
-        return err
-    }
-    return nil
-}
-
-func (a *Adapter) InsertIntoDb(rule []string) error {
-    line := savePolicyLine(rule[0], rule[1:])
-    err := a.db.Create(&line).Error
-    if err != nil {
-        return err
-    }
-    return nil
-}
-
 // AddPolicy adds a policy rule to the storage.
 func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
     line := savePolicyLine(ptype, rule)
-    err := a.db.Create(&line).Error
+    _, err := a.db.InsertOne(&line)
     return err
 }
 
@@ -291,7 +274,7 @@ func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int,
     return err
 }
 
-func rawDelete(db *gorm.DB, line MicroCasbinRule) error {
+func rawDelete(db *xorm.Engine, line MicroCasbinRule) error {
     queryArgs := []interface{}{line.PType}
 
     queryStr := "p_type = ?"
@@ -319,7 +302,6 @@ func rawDelete(db *gorm.DB, line MicroCasbinRule) error {
         queryStr += " and v5 = ?"
         queryArgs = append(queryArgs, line.V5)
     }
-    args := append([]interface{}{queryStr}, queryArgs...)
-    err := db.Delete(MicroCasbinRule{}, args...).Error
+    _,err := db.Where(queryStr,queryArgs...).Delete(MicroCasbinRule{})
     return err
 }

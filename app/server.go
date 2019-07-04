@@ -14,7 +14,6 @@ import (
     "net/http"
     "os"
     "os/signal"
-    "strconv"
     "github.com/go-kit/kit/log"
     "github.com/LongMarch7/higo/middleware/zipkin"
     grpc_transport "github.com/go-kit/kit/transport/grpc"
@@ -37,11 +36,11 @@ func defaultServerConfig() ServerOpt{
         consulAddr: "http://localhost:8500",
         prefix: "bookServer",
         serverAddr: "127.0.0.1",
-        serverPort: 0,
+        serverPort: "0",
         ctx: context.Background(),
         maxThreadCount: "1024",
         netType: "tcp",
-        advertiseAddress: "192.168.1.80",
+        advertiseAddress: "192.168.1.86",
         advertisePort: "10086",
         logger: zap.NewDefaultLogger(),
     }
@@ -60,7 +59,7 @@ func NewServer(opts ...SOption) *Server{
 }
 
 func (s *Server)init(){
-    ls, _ := net.Listen(s.opts.netType, s.opts.serverAddr+":"+strconv.Itoa(s.opts.serverPort))
+    ls, _ := net.Listen(s.opts.netType, s.opts.serverAddr+":" + s.opts.serverPort)
     s.listenConnector = ls
 
     zip := zipkin.NewZipkin(s.opts.zOptions...)

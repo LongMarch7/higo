@@ -46,7 +46,7 @@ func (h *Logger)Middleware(opts ...LOption) endpoint.Middleware{
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func() {
-				methodNameByCtx := ctx.Value(define.PatternName)
+				methodNameByCtx := ctx.Value(define.ReqPatternName)
 				pattern :=""
 				if methodNameByCtx != nil {
 					pattern = methodNameByCtx.(string)

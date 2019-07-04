@@ -3,6 +3,7 @@ package prometheus
 import (
 	"fmt"
 	"github.com/LongMarch7/higo/util/define"
+	"github.com/LongMarch7/higo/util/global"
 	"github.com/go-kit/kit/endpoint"
 	"context"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -200,9 +201,11 @@ func (p *Prometheus)PrometheusGaugeEndpoint(gauge *kitprometheus.Gauge) endpoint
 
 func LvsByContext(ctx context.Context,err error) []string{
 	var lvs []string
-	methodNameByCtx := ctx.Value(define.PatternName)
-	if methodNameByCtx != nil {
-		lvs =append(lvs, "method", methodNameByCtx.(string), "error",fmt.Sprint(err != nil))
+	if global.AppMode == define.SvrMode {
+		methodNameByCtx := ctx.Value(define.ReqPatternName)
+		if methodNameByCtx != nil {
+			lvs =append(lvs, "method", methodNameByCtx.(string), "error",fmt.Sprint(err != nil))
+		}
 	}
 	return lvs
 }

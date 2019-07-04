@@ -1,0 +1,10 @@
+[on module]
+set GO111MODULE=on    //windows
+export GO111MODULE=on //linux
+
+[compile]
+go get -v github.com/LongMarch7/higo/toolkit/xorm/xorm
+
+[run]
+cd src/github.com/LongMarch7/higo/toolkit/xorm/xorm
+gorm reverse mysql root:123456@tcp\(localhost:13306\)/test?charset=utf8 templates/goxorm

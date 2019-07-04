@@ -2,6 +2,7 @@ package view
 
 import (
     "fmt"
+    "google.golang.org/grpc/grpclog"
     "html/template"
     "io"
     "io/ioutil"
@@ -14,13 +15,12 @@ import (
 // View is an interface for rendering templates.
 type View interface {
     Render(out io.Writer, name string, data interface{}) error
-    Delims(left, right string)
 }
 
 // SimpleView implements View interface, but based on golang templates.
 type ViewStruct struct {
-    viewDir string
-    tmpl    *template.Template
+    tmpl      *template.Template
+    funcMap   template.FuncMap
 }
 
 var onceAction sync.Once
@@ -28,6 +28,8 @@ var templator View
 func defaultConfig() viewOpt{
     return viewOpt{
         dir: "E:/go_project/higo/src/github.com/LongMarch7/higo/template",
+        delimsLeft: "{{",
+        delimsRight: "}}",
     }
 }
 func NewView(opts ...VOption) View{
@@ -36,7 +38,7 @@ func NewView(opts ...VOption) View{
         for _, o := range opts {
             o(&opt)
         }
-        template, err := viewInit(opt.dir)
+        template, err := viewInit(opt)
         if err != nil{
             panic(err)
         }
@@ -45,20 +47,27 @@ func NewView(opts ...VOption) View{
     return templator
 }
 //NewSimpleView returns a SimpleView with templates loaded from viewDir
-func viewInit(viewDir string) (View, error) {
-    info, err := os.Stat(viewDir)
+func viewInit(opt viewOpt) (View, error) {
+    info, err := os.Stat(opt.dir)
     if err != nil {
         return nil, err
     }
     if !info.IsDir() {
-        return nil, fmt.Errorf("utron: %s is not a directory", viewDir)
+        return nil, fmt.Errorf("utron: %s is not a directory", opt.dir)
     }
     s := &ViewStruct{
-        viewDir: viewDir,
-        tmpl:    template.New(filepath.Base(viewDir)),
+        tmpl:    template.New(filepath.Base(opt.dir)),
+        funcMap: make(template.FuncMap),
     }
+    s.funcMap["html2str"] = HTML2str
+    s.funcMap["str2html"] = Str2html
+    s.funcMap["urlfor"] = URLFor
+    s.funcMap["convertm"] = ConvertM
+    s.funcMap["convertt"] = ConvertT
+    s.tmpl.Delims(opt.delimsLeft,opt.delimsRight)
+    s.tmpl.Funcs(s.funcMap)
     //s.tmpl.Delims("{<",">}")
-    return s.load(viewDir)
+    return s.load(opt.dir)
 }
 
 // load loads templates from dir. The templates should be valid golang templates
@@ -102,9 +111,8 @@ func (s *ViewStruct) load(dir string) (View, error) {
         name = strings.TrimPrefix(name, "/") // case  we missed the opening slash
 
         name = strings.TrimSuffix(name, extension) // remove extension
-
+        grpclog.Info(name)
         t := s.tmpl.New(name)
-
         if _, err = t.Parse(string(data)); err != nil {
             return err
         }
@@ -121,8 +129,4 @@ func (s *ViewStruct) load(dir string) (View, error) {
 // Render executes template named name, passing data as context, the output is written to out.
 func (s *ViewStruct) Render(out io.Writer, name string, data interface{}) error {
     return s.tmpl.ExecuteTemplate(out, name, data)
-}
-
-func (s *ViewStruct) Delims(left, right string){
-    s.tmpl.Delims(left,right)
 }

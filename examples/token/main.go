@@ -6,8 +6,9 @@ import (
 )
 
 func main() {
-    fmt.Println(token.NewToken("test"))
+    fmt.Println(token.NewTokenWithSalt("123456"))
     str, err := token.Sign(&token.DefaultClaims{Pwd:"admin"})
+    fmt.Println(str)
     if err == nil{
         ret, retErr := token.Parse(str,&token.DefaultClaims{})
         if retErr == nil{

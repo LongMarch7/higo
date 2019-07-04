@@ -1,11 +1,12 @@
 package zipkin
 
 type zipkinOpt struct {
-	name       string
-	url        string
-	hostPort   string
-	debug      bool
-	methodName string
+	name             string
+	url              string
+	hostPort         string
+	debug            bool
+	methodName       string
+	maxLogsPerSpan   int
 }
 type ZOption func(o *zipkinOpt)
 
@@ -36,6 +37,12 @@ func Debug(debug bool) ZOption {
 func MethodName(methodName string) ZOption {
 	return func(o *zipkinOpt) {
 		o.methodName = methodName
+	}
+}
+
+func MaxLogsPerSpan(maxLogsPerSpan int) ZOption {
+	return func(o *zipkinOpt) {
+		o.maxLogsPerSpan = maxLogsPerSpan
 	}
 }
 

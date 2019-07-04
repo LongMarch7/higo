@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/context"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 func MakeReqDataMiddleware(next func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
@@ -35,17 +36,28 @@ func MakeReqDataMiddleware(next func(http.ResponseWriter, *http.Request)) func(h
 				baseContext.Params[define.GetParamsName]  = string(getStrings)
 			}
 		}
-
-		posgVals, postErr := ioutil.ReadAll(req.Body)
-		if postErr == nil {
-			vals := string(posgVals)
-			if len(vals) > 0 {
-				baseContext.Params[define.PostParamsName] = vals
+		contType := req.Header.Get("Content-Type")
+		if strings.Contains(contType, define.ContentTypeJson){
+			posgVals, postErr := ioutil.ReadAll(req.Body)
+			req.Body.Close()
+			if postErr == nil {
+				vals := string(posgVals)
+				if len(vals) > 0 {
+					baseContext.Params[define.PostParamsJsonName] = vals
+				}
 			}
+			baseContext.Params[define.ContentType]  = define.ContentTypeJson
+		} else if strings.Contains(contType, define.ContentTypeForm){
+			req.ParseForm()
+			posgVals, postErr := json.Marshal(req.PostForm)
+			if postErr == nil {
+				baseContext.Params[define.PostParamsFormName]  = string(posgVals)
+			}
+			baseContext.Params[define.ContentType]  = define.ContentTypeForm
 		}
 
 		c, err := req.Cookie(define.CookieName)
-		if err == nil {
+		if err == nil  && len(c.Value) > 0 {
 			baseContext.Params[define.ReqCookieName] = c.Value
 		}
 		baseContext.Params[define.ReqMethodName] = req.Method

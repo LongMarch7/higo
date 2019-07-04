@@ -1,13 +1,13 @@
 package auth
 
 type MicroCasbinRule struct {
-    PType string `gorm:"VARCHAR(255)"`
-    V0    string `gorm:"VARCHAR(255)"`
-    V1    string `gorm:"VARCHAR(255)"`
-    V2    string `gorm:"VARCHAR(255)"`
-    V3    string `gorm:"VARCHAR(255)"`
-    V4    string `gorm:"VARCHAR(255)"`
-    V5    string `gorm:"VARCHAR(255)"`
+    PType string `xorm:"VARCHAR(255)"`
+    V0    string `xorm:"VARCHAR(255)"`
+    V1    string `xorm:"VARCHAR(255)"`
+    V2    string `xorm:"VARCHAR(255)"`
+    V3    string `xorm:"VARCHAR(255)"`
+    V4    string `xorm:"VARCHAR(255)"`
+    V5    string `xorm:"VARCHAR(255)"`
 }
 
 func (c *MicroCasbinRule) TableName() string {

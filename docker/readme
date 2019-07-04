@@ -23,4 +23,4 @@
  docker stop $(docker ps -a -q)
 
  #consul remove inavalid server
-  curl -v -X PUT "http://127.0.0.1:8500/v1/agent/service/deregister/PORT50232"
+  curl -v -X PUT "http://127.0.0.1:8500/v1/agent/service/deregister/PORT10085"

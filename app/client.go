@@ -140,7 +140,7 @@ func (c *Client)AddEndpoint(opts ...COption){
         reqEndPoint = c.opts.middleware.AddMiddleware(middleware.Endpoint(reqEndPoint)).Endpoint()
     }
 
-    zip := zipkin.NewZipkin()
+    zip := zipkin.NewZipkin(c.opts.zOptions...)
     c.zipkin = zip
     dialOpts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}
     if tracer := zip.GetTracer(); tracer != nil {

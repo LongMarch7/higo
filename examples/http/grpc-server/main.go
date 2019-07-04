@@ -16,7 +16,7 @@ func main() {
     etcdServer := flag.String("e","http://localhost:8500","etcd service addr")
     prefix := flag.String("n","WebServer","prefix value")
     serviceAddress := flag.String("s","127.0.0.1","server addr")
-    servicePort := flag.Int("p",0,"server port")
+    servicePort := flag.String("p","0","server port")
     threadMax := flag.String("c","1024","server thread pool max thread count")
     flag.Parse()
     ctx := context.Background()

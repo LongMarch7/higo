@@ -14,7 +14,7 @@ type ServerOpt struct {
     consulAddr           string
     prefix               string
     serverAddr           string
-    serverPort           int
+    serverPort           string
     ctx                  context.Context
     netType              string
     maxThreadCount       string
@@ -44,7 +44,7 @@ func SServerAddr(server string) SOption {
     }
 }
 
-func SServerPort(serverPort int) SOption {
+func SServerPort(serverPort string) SOption {
     return func(o *ServerOpt) {
         o.serverPort = serverPort
     }
@@ -100,6 +100,7 @@ type ClientOpt struct {
     retryCount      int
     passingOnly     bool
     logger          log.Logger
+    zOptions        []zipkin.ZOption
     middleware      *middleware.Middleware
     encodeFunc      grpc_transport.EncodeRequestFunc
     decodeFunc      grpc_transport.DecodeResponseFunc
@@ -163,5 +164,11 @@ func CEncodeFunc(encodeFunc grpc_transport.EncodeRequestFunc) COption {
 func CDecodeFunc(decodeFunc grpc_transport.DecodeResponseFunc) COption {
     return func(o *ClientOpt) {
         o.decodeFunc = decodeFunc
+    }
+}
+
+func CzOptions(zOptions  []zipkin.ZOption) COption {
+    return func(o *ClientOpt) {
+        o.zOptions = zOptions
     }
 }

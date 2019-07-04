@@ -3,13 +3,17 @@ package auth
 import (
     "github.com/casbin/casbin"
     _ "github.com/go-sql-driver/mysql"
+    "sync"
 )
+
 type Casbin struct {
     opts     authOpt
     enforcer *casbin.Enforcer
     adapter  *Adapter
 }
 
+var initOpt sync.Once
+var cas *Casbin
 func defaultConfig() authOpt{
     return authOpt{
         driverName:         "mysql",
@@ -30,25 +34,31 @@ g = _, _
 e = some(where (p.eft == allow))
 
 [matchers]
-m = g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act
+m = g(r.sub, p.sub) && r.obj == p.obj && regexMatch(r.act, p.act)
 `,
     }
 }
 
 func NewCasbin(opts ...AOption) *Casbin {
-    opt := defaultConfig()
-    for _, o := range opts {
-        o(&opt)
-    }
-    a := NewAdapter(opt.driverName,opt.dataSourceName,opt.baseName,opt.dbSpecified)
-    m := casbin.NewModel(opt.ruleText)
-    cas := &Casbin{
-        opts: opt,
-        adapter: a,
-        enforcer: casbin.NewEnforcer(m, a),
-    }
-    cas.enforcer.LoadPolicy()
+    initOpt.Do(func() {
+        opt := defaultConfig()
+        for _, o := range opts {
+            o(&opt)
+        }
+        a := NewAdapter()
+        m := casbin.NewModel(opt.ruleText)
+        cas = &Casbin{
+            opts: opt,
+            adapter: a,
+            enforcer: casbin.NewEnforcer(m, a),
+        }
+        cas.enforcer.LoadPolicy()
+    })
     return cas
+}
+
+func (c* Casbin)ReloadPolicy(){
+    c.enforcer.LoadPolicy()
 }
 
 func (c* Casbin)Enforcer() *casbin.Enforcer{
